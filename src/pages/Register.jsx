@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { fetchWithRetry, classifyError, ErrorTypes } from '../utils/fetchWithRetry';
+import { useRateLimiter } from '../hooks/useRateLimiter';
+import { API_ENDPOINTS } from '../config/api.config';
 import '../styles/Auth.css';
 
 const Register = () => {
@@ -13,6 +16,15 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [retryInfo, setRetryInfo] = useState(null);
+
+  // Rate limiter para prevenir registros abusivos
+  const rateLimiter = useRateLimiter({
+    maxAttempts: 3,
+    windowMs: 120000, // 2 minutos
+    lockoutMs: 60000, // 1 minuto de bloqueo
+    storageKey: 'register_rate_limit'
+  });
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,32 +79,53 @@ const Register = () => {
     e.preventDefault();
     setApiError('');
     setSuccessMessage('');
+    setRetryInfo(null);
 
     if (!validateForm()) {
+      return;
+    }
+
+    // Verificar rate limiting antes de intentar
+    const limitCheck = rateLimiter.checkLimit();
+    if (!limitCheck.allowed) {
+      setApiError(limitCheck.message);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Usar la API de reqres.in para simular el registro
-      const response = await fetch('https://reqres.in/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': 'reqres-free-v1'
+      // Usar fetchWithRetry para manejo robusto de errores de red
+      const response = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.REGISTER,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          })
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        {
+          maxRetries: 3,
+          baseDelay: 1000,
+          onRetry: (info) => {
+            setRetryInfo({
+              attempt: info.attempt,
+              maxRetries: info.maxRetries,
+              message: `Reintentando conexión (${info.attempt}/${info.maxRetries})...`
+            });
+          }
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        // Registro exitoso - almacenar token temporalmente
-        localStorage.setItem('registerToken', data.token);
+        // Registro exitoso - resetear rate limiter
+        rateLimiter.recordSuccess();
         setSuccessMessage('¡Registro exitoso! Redirigiendo al login...');
         
         // Redireccionar al login después de 2 segundos
@@ -100,13 +133,32 @@ const Register = () => {
           navigate('/login');
         }, 2000);
       } else {
-        // Error en el registro
-        setApiError(data.error || 'Error al registrar el usuario. Use: eve.holt@reqres.in');
+        // Error en el registro - registrar intento fallido
+        rateLimiter.recordAttempt();
+        
+        // Mostrar advertencia si quedan pocos intentos
+        const status = rateLimiter.getStatus();
+        let errorMessage = data.error || 'Error al registrar el usuario';
+        
+        if (status.remainingAttempts > 0 && status.remainingAttempts <= 2) {
+          errorMessage += ` (${status.remainingAttempts} intentos restantes)`;
+        }
+        
+        setApiError(errorMessage);
       }
     } catch (error) {
-      setApiError('Error de conexión. Por favor, intente nuevamente.');
+      // Clasificar el error para mostrar mensaje apropiado
+      const errorInfo = classifyError(error);
+      
+      // Solo registrar intento si no es error de red
+      if (errorInfo.type !== ErrorTypes.NETWORK) {
+        rateLimiter.recordAttempt();
+      }
+      
+      setApiError(errorInfo.message);
     } finally {
       setIsLoading(false);
+      setRetryInfo(null);
     }
   };
 
@@ -129,6 +181,20 @@ const Register = () => {
           {successMessage && (
             <div className="success-message">
               {successMessage}
+            </div>
+          )}
+
+          {retryInfo && (
+            <div className="retry-message">
+              <span className="retry-spinner"></span>
+              {retryInfo.message}
+            </div>
+          )}
+
+          {rateLimiter.isLocked && (
+            <div className="lockout-message">
+              <span className="lockout-icon">🔒</span>
+              <span>Bloqueado temporalmente. Espere {rateLimiter.remainingSeconds} segundos.</span>
             </div>
           )}
 
@@ -177,17 +243,17 @@ const Register = () => {
             {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
           </div>
 
-          <button type="submit" className="auth-button" disabled={isLoading}>
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={isLoading || rateLimiter.isLocked}
+          >
             {isLoading ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>¿Ya tienes una cuenta? <Link to="/login">Iniciar Sesión</Link></p>
-        </div>
-
-        <div className="api-hint">
-          <p>💡 Para pruebas use: <strong>eve.holt@reqres.in</strong></p>
         </div>
       </div>
     </div>

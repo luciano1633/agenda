@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { fetchWithRetry, classifyError, ErrorTypes } from '../utils/fetchWithRetry';
+import { useRateLimiter } from '../hooks/useRateLimiter';
+import { API_ENDPOINTS } from '../config/api.config';
 import '../styles/Auth.css';
 
 const Login = () => {
@@ -13,6 +16,15 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [retryInfo, setRetryInfo] = useState(null);
+
+  // Rate limiter para prevenir ataques de fuerza bruta
+  const rateLimiter = useRateLimiter({
+    maxAttempts: 5,
+    windowMs: 60000, // 1 minuto
+    lockoutMs: 30000, // 30 segundos de bloqueo
+    storageKey: 'login_rate_limit'
+  });
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -57,41 +69,82 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
+    setRetryInfo(null);
 
     if (!validateForm()) {
+      return;
+    }
+
+    // Verificar rate limiting antes de intentar
+    const limitCheck = rateLimiter.checkLimit();
+    if (!limitCheck.allowed) {
+      setApiError(limitCheck.message);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Usar la API de reqres.in para el login
-      const response = await fetch('https://reqres.in/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': 'reqres-free-v1'
+      // Usar fetchWithRetry para manejo robusto de errores de red
+      const response = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.LOGIN,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          })
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        {
+          maxRetries: 3,
+          baseDelay: 1000,
+          onRetry: (info) => {
+            setRetryInfo({
+              attempt: info.attempt,
+              maxRetries: info.maxRetries,
+              message: `Reintentando conexión (${info.attempt}/${info.maxRetries})...`
+            });
+          }
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        // Login exitoso - almacenar token y redireccionar
-        login(data.token, formData.email);
+        // Login exitoso - resetear rate limiter y redireccionar
+        rateLimiter.recordSuccess();
+        login(data.token, data.user.email);
         navigate('/dashboard');
       } else {
-        // Error en el login
-        setApiError(data.error || 'Credenciales inválidas. Intente con: eve.holt@reqres.in');
+        // Error en el login - registrar intento fallido
+        rateLimiter.recordAttempt();
+        
+        // Mostrar advertencia si quedan pocos intentos
+        const status = rateLimiter.getStatus();
+        let errorMessage = data.error || 'Credenciales inválidas';
+        
+        if (status.remainingAttempts <= 2 && status.remainingAttempts > 0) {
+          errorMessage += ` (${status.remainingAttempts} intentos restantes)`;
+        }
+        
+        setApiError(errorMessage);
       }
     } catch (error) {
-      setApiError('Error de conexión. Por favor, intente nuevamente.');
+      // Clasificar el error para mostrar mensaje apropiado
+      const errorInfo = classifyError(error);
+      
+      // Solo registrar intento si no es error de red (el usuario puede reintentar)
+      if (errorInfo.type !== ErrorTypes.NETWORK) {
+        rateLimiter.recordAttempt();
+      }
+      
+      setApiError(errorInfo.message);
     } finally {
       setIsLoading(false);
+      setRetryInfo(null);
     }
   };
 
@@ -108,6 +161,20 @@ const Login = () => {
           {apiError && (
             <div className="error-message api-error">
               {apiError}
+            </div>
+          )}
+
+          {retryInfo && (
+            <div className="retry-message">
+              <span className="retry-spinner"></span>
+              {retryInfo.message}
+            </div>
+          )}
+
+          {rateLimiter.isLocked && (
+            <div className="lockout-message">
+              <span className="lockout-icon">🔒</span>
+              <span>Bloqueado temporalmente. Espere {rateLimiter.remainingSeconds} segundos.</span>
             </div>
           )}
 
@@ -141,17 +208,17 @@ const Login = () => {
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          <button type="submit" className="auth-button" disabled={isLoading}>
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={isLoading || rateLimiter.isLocked}
+          >
             {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link></p>
-        </div>
-
-        <div className="api-hint">
-          <p>💡 Para pruebas use: <strong>eve.holt@reqres.in</strong> con cualquier contraseña</p>
         </div>
       </div>
     </div>

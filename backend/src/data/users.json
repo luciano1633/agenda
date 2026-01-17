@@ -1,0 +1,10 @@
+{
+  "users": [
+    {
+      "id": "348641a1-0d53-4796-be50-fbefd86266e2",
+      "email": "hola@hotmail.com",
+      "password": "$2a$10$lMz.sznw06w33MCXFxzAqOcRy5hfRGUdJGqudXN.pWTUV8o9YF.T.",
+      "createdAt": "2026-01-17T13:23:39.300Z"
+    }
+  ]
+}

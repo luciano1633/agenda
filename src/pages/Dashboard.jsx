@@ -1,14 +1,31 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { API_ENDPOINTS, getDefaultHeaders } from '../config/api.config';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      // Notificar al backend del cierre de sesión
+      await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
+        method: 'POST',
+        headers: getDefaultHeaders(token)
+      });
+    } catch (error) {
+      // Si hay error de red, igualmente cerrar sesión localmente
+      console.warn('Error al notificar logout al servidor:', error);
+    } finally {
+      // Siempre cerrar sesión localmente
+      logout();
+      navigate('/login');
+    }
   };
 
   return (
@@ -21,8 +38,12 @@ const Dashboard = () => {
           </div>
           <div className="user-section">
             <span className="user-email">{user?.email}</span>
-            <button onClick={handleLogout} className="logout-button">
-              Cerrar Sesión
+            <button 
+              onClick={handleLogout} 
+              className="logout-button"
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}
             </button>
           </div>
         </div>
