@@ -17,6 +17,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [retryInfo, setRetryInfo] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Rate limiter para prevenir ataques de fuerza bruta
   const rateLimiter = useRateLimiter({
@@ -66,6 +67,20 @@ const Login = () => {
     setApiError('');
   };
 
+          <div className="form-group">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Ingrese su contraseña"
+              className={errors.password ? 'input-error' : ''}
+              disabled={isLoading}
+            />
+            {errors.password && <span className="error-text">{errors.password}</span>}
+          </div>
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
@@ -215,6 +230,18 @@ const Login = () => {
           >
             {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
+
+          <div className="oauth-divider">
+            <span>o</span>
+          </div>
+          <a
+            href="http://localhost:3001/api/oauth/google"
+            className="auth-button google-login"
+            style={{ background: '#fff', color: '#333', border: '1px solid #ccc', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google" style={{ width: 20, height: 20, marginRight: 8 }} />
+            Iniciar sesión con Google
+          </a>
         </form>
 
         <div className="auth-footer">
@@ -223,6 +250,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
+;
+}
 export default Login;

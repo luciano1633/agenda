@@ -1,32 +1,46 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useGoogleSession } from '../hooks/useGoogleSession';
 import { API_ENDPOINTS, getDefaultHeaders } from '../config/api.config';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, token, logout } = useAuth();
+  const { googleUser, loading: loadingGoogle } = useGoogleSession();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    
-    try {
-      // Notificar al backend del cierre de sesión
-      await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
-        method: 'POST',
-        headers: getDefaultHeaders(token)
-      });
-    } catch (error) {
-      // Si hay error de red, igualmente cerrar sesión localmente
-      console.warn('Error al notificar logout al servidor:', error);
-    } finally {
-      // Siempre cerrar sesión localmente
-      logout();
+    if (googleUser) {
+      // Logout Google
+      await fetch('http://localhost:3001/api/oauth/logout', { credentials: 'include' });
+      setIsLoggingOut(false);
       navigate('/login');
+    } else {
+      try {
+        // Notificar al backend del cierre de sesión
+        await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
+          method: 'POST',
+          headers: getDefaultHeaders(token)
+        });
+      } catch (error) {
+        // Si hay error de red, igualmente cerrar sesión localmente
+        console.warn('Error al notificar logout al servidor:', error);
+      } finally {
+        // Siempre cerrar sesión localmente
+        logout();
+        navigate('/login');
+      }
     }
   };
+
+  if (loadingGoogle) return <div className="dashboard-container"><h2>Cargando...</h2></div>;
+
+  // Prioridad: usuario local, luego Google
+  const currentUser = user || googleUser;
+  if (!currentUser) return <div className="dashboard-container"><h2>No autenticado</h2></div>;
 
   return (
     <div className="dashboard-container">
@@ -37,7 +51,7 @@ const Dashboard = () => {
             <h1>Agencia de Viajes Oeste</h1>
           </div>
           <div className="user-section">
-            <span className="user-email">{user?.email}</span>
+            <span className="user-email">{currentUser?.email}</span>
             <button 
               onClick={handleLogout} 
               className="logout-button"
@@ -54,8 +68,11 @@ const Dashboard = () => {
           <div className="welcome-icon">🌍</div>
           <h2>¡Bienvenido al Portal de Reservas!</h2>
           <p className="welcome-message">
-            Hola <strong>{user?.email}</strong>, has iniciado sesión exitosamente.
+            Hola <strong>{currentUser?.displayName || currentUser?.email}</strong>, has iniciado sesión exitosamente.
           </p>
+          {currentUser?.photo && (
+            <img src={currentUser.photo} alt="avatar" style={{ width: 60, borderRadius: '50%', margin: '1rem auto' }} />
+          )}
           <p className="welcome-subtitle">
             Desde aquí podrás gestionar tus reservas de vuelos y explorar nuevos destinos.
           </p>

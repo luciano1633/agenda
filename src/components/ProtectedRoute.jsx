@@ -1,10 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useGoogleSession } from '../hooks/useGoogleSession';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const { googleUser, loading: loadingGoogle } = useGoogleSession();
 
-  if (loading) {
+  if (loading || loadingGoogle) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -13,7 +15,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated()) {
+  if (!isAuthenticated() && !googleUser) {
     return <Navigate to="/login" replace />;
   }
 

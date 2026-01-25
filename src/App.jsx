@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import OauthWelcome from './pages/OauthWelcome';
 import './App.css';
 
 function App() {
@@ -27,6 +28,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* Ruta de bienvenida para login con Google */}
+          <Route path="/oauth/welcome" element={<OauthWelcome />} />
           
           {/* Ruta para cualquier otra URL - redirige al login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
