@@ -1,21 +1,30 @@
 # Agencia de Viajes Oeste - Portal de Reservas
 
+
 Portal web para la gestión de reservas de vuelos de la Agencia de Viajes Oeste.
+
+## 🌐 Novedades: Integración con Google y Despliegue en la Nube
+
+- **Login con Google**: Ahora puedes iniciar sesión usando tu cuenta de Google de manera segura y rápida. El backend utiliza Passport.js con Google OAuth 2.0 y el frontend ofrece un botón dedicado para autenticación con Google.
+- **Preparado para la nube**: El proyecto está listo para ser desplegado en plataformas cloud (como Render, Railway, Vercel, etc.), con variables de entorno y configuración flexible para producción.
+
 
 ## 🚀 Características
 
 - **Registro de usuarios**: Formulario con validación de email y contraseña
-- **Inicio de sesión**: Autenticación con JWT (JSON Web Tokens)
+- **Inicio de sesión**: Autenticación con JWT (JSON Web Tokens) o Google OAuth
+- **Login con Google**: Acceso rápido y seguro usando tu cuenta de Google
 - **Vista protegida**: Dashboard accesible solo para usuarios autenticados
-- **Cierre de sesión**: Eliminación del token y redirección al login
+- **Cierre de sesión**: Eliminación del token/sesión y redirección al login
 - **Validaciones**: Campos vacíos, formato de email, confirmación de contraseña
-- **Backend local**: Servidor Node.js/Express con almacenamiento en JSON
-- **Seguridad**: Contraseñas encriptadas con bcrypt, tokens JWT
+- **Backend local y cloud-ready**: Servidor Node.js/Express con almacenamiento en JSON y preparado para despliegue en la nube
+- **Seguridad**: Contraseñas encriptadas con bcrypt, tokens JWT, rate limiting, sanitización de entradas
 
 ## 📋 Requisitos
 
 - Node.js 18 o superior
 - npm o yarn
+
 
 ## 🛠️ Instalación y Ejecución
 
@@ -60,7 +69,15 @@ npm run dev
 ```
 La aplicación estará disponible en `http://localhost:5173`
 
+
 ## 🔗 Endpoints del Backend
+
+### OAuth (Google)
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET    | `/api/oauth/google`   | Iniciar login con Google |
+| GET    | `/api/oauth/callback` | Callback de Google OAuth |
+| GET    | `/api/oauth/logout`   | Cerrar sesión Google/local |
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -135,6 +152,7 @@ La aplicación estará disponible en `http://localhost:5173`
 - React Router DOM
 - API: reqres.in (para simulación)
 
+
 ## 📝 Funcionalidades Implementadas
 
 ### Registro
@@ -144,14 +162,23 @@ La aplicación estará disponible en `http://localhost:5173`
 - Almacenamiento de token en localStorage
 - Redirección al login tras registro exitoso
 
+
 ### Login
 - Validación de campos vacíos
 - Validación de formato de email
-- Conexión con API reqres.in
-- Almacenamiento de token en localStorage
+- Login local (JWT) y con Google OAuth
+- Almacenamiento de token/sesión en localStorage o cookie
 - Redirección al dashboard tras login exitoso
 - Mensajes de error para credenciales inválidas
 
+### Google OAuth
+- Botón de login con Google en el frontend
+- Redirección automática tras autenticación exitosa
+- Soporte para cierre de sesión Google/local
+
+### Despliegue en la nube
+- Configuración lista para plataformas cloud (variables de entorno, CORS, etc.)
+- Documentación para adaptar URLs y credenciales según el entorno
 ### Dashboard
 - Mensaje de bienvenida personalizado
 - Botón de cierre de sesión
