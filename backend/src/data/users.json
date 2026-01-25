@@ -5,6 +5,12 @@
       "email": "hola@hotmail.com",
       "password": "$2a$10$lMz.sznw06w33MCXFxzAqOcRy5hfRGUdJGqudXN.pWTUV8o9YF.T.",
       "createdAt": "2026-01-17T13:23:39.300Z"
+    },
+    {
+      "id": "347a7b0c-c150-4421-90ed-7eeec4063ab9",
+      "email": "hola2@hotmail.com",
+      "password": "$2a$10$VIXeCj.YKvYdzaaE69cCm.MYHlZBy5q4rgIm/kTRP6kZuezB12Wyi",
+      "createdAt": "2026-01-25T11:10:31.640Z"
     }
   ]
 }

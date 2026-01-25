@@ -1,20 +1,39 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
+const oauthRoutes = require('./routes/oauth.routes');
 const { errorHandler } = require('./middleware/errorHandler');
+const { globalLimiter } = require('./middleware/globalRateLimiter');
+const config = require('./config/config');
+const session = require('express-session');
+const passport = require('./config/passport');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = config.PORT;
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173', // URL del frontend de Vite
+  origin: config.CORS_ORIGIN,
   credentials: true
 }));
+
+// Middleware global de rate limiting
+app.use(globalLimiter);
 app.use(express.json());
+
+// Configuración de sesión para Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'session_secret_key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Cambiar a true si usas HTTPS
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/oauth', oauthRoutes);
 
 // Ruta de verificación de salud del servidor
 app.get('/api/health', (req, res) => {

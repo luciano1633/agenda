@@ -1,11 +1,14 @@
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/user.model');
 const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/config');
+const { sanitizeObject } = require('../utils/sanitize');
 
 /**
  * Controlador de autenticación
  * Maneja registro, login, logout y verificación de token
  */
+const { isStrongPassword } = require('../utils/passwordStrength');
+
 class AuthController {
   /**
    * Registrar un nuevo usuario
@@ -13,7 +16,8 @@ class AuthController {
    */
   static async register(req, res) {
     try {
-      const { email, password } = req.body;
+      // Sanitizar entradas
+      const { email, password } = sanitizeObject(req.body);
 
       // Validaciones
       if (!email || !password) {
@@ -30,10 +34,11 @@ class AuthController {
         });
       }
 
-      // Validar longitud de contraseña
-      if (password.length < 6) {
+
+      // Validar fortaleza de contraseña
+      if (!isStrongPassword(password)) {
         return res.status(400).json({
-          error: 'La contraseña debe tener al menos 6 caracteres'
+          error: 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.'
         });
       }
 
@@ -68,7 +73,8 @@ class AuthController {
    */
   static async login(req, res) {
     try {
-      const { email, password } = req.body;
+      // Sanitizar entradas
+      const { email, password } = sanitizeObject(req.body);
 
       // Validaciones
       if (!email || !password) {
