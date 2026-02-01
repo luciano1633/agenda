@@ -1,0 +1,19 @@
+{
+  "requests": [
+    {
+      "id": 1001,
+      "clientDni": "19544786-1",
+      "clientName": "luciano alexander rivera carrera",
+      "origin": "Santiago, Chile",
+      "destination": "Buenos Aires, Argentina",
+      "tripType": "turismo",
+      "passengerName": "Fabián Gamboa Martínez",
+      "departureDateTime": "2026-02-01T19:00",
+      "returnDateTime": "2026-02-02T19:00",
+      "registrationDateTime": "2026-02-01T22:41:41.218Z",
+      "status": "finalizada",
+      "email": "luciano@hotmail.com"
+    }
+  ],
+  "nextId": 1002
+}

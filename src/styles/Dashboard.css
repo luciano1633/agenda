@@ -43,7 +43,14 @@
 .user-section {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 .user-email {
@@ -69,10 +76,44 @@
   border-color: #e94560;
 }
 
+/* Navegación por pestañas */
+.dashboard-nav {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-tab {
+  background: none;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-tab:hover {
+  color: #2563eb;
+  background-color: #f8fafc;
+}
+
+.nav-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background-color: #f8fafc;
+}
+
 /* Main Content */
 .dashboard-main {
   flex: 1;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 30px 20px;
   width: 100%;
@@ -139,6 +180,7 @@
   text-align: center;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .feature-card:hover {
@@ -444,5 +486,63 @@
 
   .feature-icon {
     font-size: 56px;
+  }
+}
+
+/* Sección de solicitudes de viaje */
+.travel-requests-section {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Alertas en el dashboard */
+.dashboard-main .alert {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dashboard-main .alert-success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.dashboard-main .alert-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Responsive para navegación */
+@media (max-width: 768px) {
+  .dashboard-nav {
+    padding: 0 10px;
+    gap: 5px;
+  }
+
+  .nav-tab {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+
+  .user-section {
+    gap: 10px;
+  }
+
+  .user-email {
+    display: none;
   }
 }

@@ -14,6 +14,10 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     VERIFY: `${API_BASE_URL}/auth/verify`
   },
+  TRAVEL_REQUESTS: {
+    BASE: `${API_BASE_URL}/travel-requests`,
+    SEARCH_CLIENTS: `${API_BASE_URL}/travel-requests/clients/search`
+  },
   HEALTH: `${API_BASE_URL}/health`
 };
 

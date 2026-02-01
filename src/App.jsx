@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import OauthWelcome from './pages/OauthWelcome';
+import TravelRequests from './pages/TravelRequests';
 import './App.css';
 
 function App() {
@@ -25,6 +26,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Ruta protegida - Solicitudes de Viaje */}
+          <Route 
+            path="/travel-requests" 
+            element={
+              <ProtectedRoute>
+                <TravelRequests />
               </ProtectedRoute>
             } 
           />

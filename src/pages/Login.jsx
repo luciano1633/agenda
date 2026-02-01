@@ -67,20 +67,20 @@ const Login = () => {
     setApiError('');
   };
 
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Ingrese su contraseña"
-              className={errors.password ? 'input-error' : ''}
-              disabled={isLoading}
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
+  <div className="form-group">
+    <label htmlFor="password">Contraseña</label>
+    <input
+      type="password"
+      id="password"
+      name="password"
+      value={formData.password}
+      onChange={handleChange}
+      placeholder="Ingrese su contraseña"
+      className={errors.password ? 'input-error' : ''}
+      disabled={isLoading}
+    />
+    {errors.password && <span className="error-text">{errors.password}</span>}
+  </div>
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
@@ -136,26 +136,26 @@ const Login = () => {
       } else {
         // Error en el login - registrar intento fallido
         rateLimiter.recordAttempt();
-        
+
         // Mostrar advertencia si quedan pocos intentos
         const status = rateLimiter.getStatus();
         let errorMessage = data.error || 'Credenciales inválidas';
-        
+
         if (status.remainingAttempts <= 2 && status.remainingAttempts > 0) {
           errorMessage += ` (${status.remainingAttempts} intentos restantes)`;
         }
-        
+
         setApiError(errorMessage);
       }
     } catch (error) {
       // Clasificar el error para mostrar mensaje apropiado
       const errorInfo = classifyError(error);
-      
+
       // Solo registrar intento si no es error de red (el usuario puede reintentar)
       if (errorInfo.type !== ErrorTypes.NETWORK) {
         rateLimiter.recordAttempt();
       }
-      
+
       setApiError(errorInfo.message);
     } finally {
       setIsLoading(false);
@@ -223,9 +223,9 @@ const Login = () => {
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          <button 
-            type="submit" 
-            className="auth-button" 
+          <button
+            type="submit"
+            className="auth-button"
             disabled={isLoading || rateLimiter.isLocked}
           >
             {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
@@ -250,6 +250,6 @@ const Login = () => {
       </div>
     </div>
   );
-;
+  ;
 }
 export default Login;

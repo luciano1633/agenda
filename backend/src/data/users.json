@@ -11,6 +11,18 @@
       "email": "hola2@hotmail.com",
       "password": "$2a$10$VIXeCj.YKvYdzaaE69cCm.MYHlZBy5q4rgIm/kTRP6kZuezB12Wyi",
       "createdAt": "2026-01-25T11:10:31.640Z"
+    },
+    {
+      "id": "a02a518d-84f4-4c8a-959d-89441907626b",
+      "email": "hola3@hotmail.com",
+      "password": "$2a$10$DNDRuj/rmnjndOW4xgAsbuDG2UyjZrAEU3zEhO.kFJEwaZ6fuzvdq",
+      "createdAt": "2026-01-25T14:24:20.068Z"
+    },
+    {
+      "id": "bfa13652-899f-4e2c-a597-e5b4f9265432",
+      "email": "hola4@hotmail.com",
+      "password": "$2a$10$SKx1DjlCId7ybu4jbaprgOHIvtOzpu6KDkk3mZoAI1W/V513lgp/6",
+      "createdAt": "2026-02-01T22:35:45.404Z"
     }
   ]
 }

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
 const oauthRoutes = require('./routes/oauth.routes');
+const travelRequestRoutes = require('./routes/travelRequest.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { globalLimiter } = require('./middleware/globalRateLimiter');
 const config = require('./config/config');
@@ -34,6 +35,7 @@ app.use(passport.session());
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/oauth', oauthRoutes);
+app.use('/api/travel-requests', travelRequestRoutes);
 
 // Ruta de verificación de salud del servidor
 app.get('/api/health', (req, res) => {
