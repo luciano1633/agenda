@@ -2,7 +2,32 @@
 
 Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend) y **Node.js/Express** (backend).
 
-## 🚀 Características
+## �️ Renderizado desde el Servidor (SSR)
+
+Esta aplicación implementa **Server-Side Rendering (SSR)** con Next.js App Router:
+
+- **Páginas como Server Components**: Las páginas (`page.js`) se ejecutan en el servidor de Next.js, realizando `fetch` a la API backend antes de enviar el HTML completo al navegador.
+- **Datos pre-renderizados**: Las estadísticas del panel de control y el listado de solicitudes llegan al cliente ya resueltos en el HTML, sin necesidad de esperar llamadas AJAX.
+- **Hidratación selectiva**: Solo los componentes que requieren interactividad (formulario, filtros, eliminación) usan `'use client'` para hidratarse en el navegador.
+- **Beneficios**: Mejor SEO, accesibilidad mejorada, tiempos de carga inicial más rápidos.
+
+| Página | Tipo | Descripción |
+|--------|------|-------------|
+| `/` (panel de control) | Server Component | Fetch de estadísticas en el servidor |
+| `/solicitudes` (listado) | Server Component | Fetch de solicitudes en el servidor, pasa datos al Client Component |
+| `/solicitudes/nueva` (formulario) | Server Component + Client Component | Layout SSR, formulario interactivo en cliente |
+
+## 🛡️ Sanitización y Protección XSS
+
+Se implementa protección contra ataques Cross-Site Scripting (XSS) en ambas capas:
+
+- **Backend**: Middleware con la librería `xss` que sanitiza automáticamente todos los campos del `req.body` antes de que lleguen a los controladores.
+- **Frontend**: Uso de `DOMPurify` (versión isomorphic compatible con SSR) para:
+  - Sanitizar datos del formulario antes de enviarlos al backend.
+  - Limpiar datos renderizados en la tabla de solicitudes.
+- Los tags HTML maliciosos como `<script>`, atributos como `onerror`, y código JavaScript inyectado son eliminados o escapados automáticamente.
+
+## �🚀 Características
 
 ### Sistema de Solicitudes de Viaje
 - **Formulario completo** de registro con todos los campos requeridos:
@@ -119,6 +144,8 @@ npm run dev
 │   │   │   └── travelRequest.model.js    # Modelo de solicitud + clientes mock
 │   │   ├── routes/
 │   │   │   └── travelRequest.routes.js   # Definición de rutas API
+│   │   ├── utils/
+│   │   │   └── sanitize.js               # Sanitización XSS (middleware + utilidades)
 │   │   └── server.js                     # Punto de entrada del servidor
 │   └── package.json
 │
@@ -148,21 +175,22 @@ npm run dev
 ## 🔧 Tecnologías Utilizadas
 
 ### Frontend
-- **Next.js 14** (App Router)
-- **React 18** (componentes client-side con `'use client'`)
+- **Next.js 14** (App Router con Server Components para SSR)
+- **React 18** (Server Components + Client Components con `'use client'`)
+- **isomorphic-dompurify** (sanitización XSS compatible con SSR)
 - **CSS3** (diseño responsivo, grid, flexbox)
 
 ### Backend
 - **Node.js**
 - **Express.js**
+- **xss** (sanitización de entradas contra ataques XSS)
 - **Archivo JSON** (persistencia mock local)
 - **CORS** (comunicación cross-origin)
-- **UUID** (generación de identificadores)
 
 ## 📝 Funcionalidades Implementadas
 
-### Panel de Control (Página principal)
-- Estadísticas en tiempo real (total, pendientes, en proceso, finalizadas)
+### Panel de Control (Página principal) — SSR
+- Estadísticas renderizadas desde el servidor (no requiere AJAX en carga inicial)
 - Accesos rápidos a nueva solicitud y listado
 - Diseño con tarjetas informativas
 
@@ -170,18 +198,27 @@ npm run dev
 - ID automático correlativo (obtenido del backend)
 - Fecha y hora de registro en tiempo real (se actualiza cada segundo)
 - Validación completa de todos los campos antes del envío
+- **Sanitización XSS** con DOMPurify antes de enviar datos al backend
 - Campo de búsqueda de pasajeros con dropdown de resultados
 - Tipo de viaje con control de listado (select)
 - Estado con botones de opción (radio buttons)
 - Botones de limpiar y registrar
 
-### Listado de Solicitudes
+### Listado de Solicitudes — SSR
+- **Datos pre-renderizados desde el servidor** (tabla lista en el HTML inicial)
 - Tabla con todas las columnas: ID, DNI, nombre, origen, destino, tipo, pasajero, salida, regreso, registro, estado
+- **Sanitización XSS** con DOMPurify al mostrar datos en la tabla
 - Filtro por estado con selector desplegable
 - Contador de resultados filtrados
 - Badges de color por estado
 - Botón de eliminar por solicitud
 - Diseño responsive con scroll horizontal en pantallas pequeñas
+
+### Seguridad y Sanitización
+- Middleware XSS global en backend (librería `xss`)
+- Sanitización de datos en formulario con DOMPurify (frontend)
+- Sanitización de datos renderizados en tabla con DOMPurify (frontend)
+- Protección contra inyección de `<script>`, `onerror`, y otros vectores XSS
 
 ## 📄 Licencia
 

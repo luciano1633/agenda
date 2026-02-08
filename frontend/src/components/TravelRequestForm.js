@@ -2,8 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getNextId, createRequest, searchClients } from '@/services/api';
+import DOMPurify from 'isomorphic-dompurify';
 
-export default function TravelRequestForm({ onSuccess }) {
+/**
+ * Sanitiza un valor de entrada para prevenir ataques XSS.
+ */
+const sanitizeInput = (value) => {
+  if (!value) return '';
+  return DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [] });
+};
+
+export default function TravelRequestForm() {
   // Estado del formulario
   const [formData, setFormData] = useState({
     clientDni: '',
@@ -181,7 +190,17 @@ export default function TravelRequestForm({ onSuccess }) {
 
     setLoading(true);
     try {
-      const result = await createRequest(formData);
+      // Sanitizar todos los campos antes de enviarlos al backend (prevención XSS)
+      const sanitizedData = {
+        ...formData,
+        clientDni: sanitizeInput(formData.clientDni),
+        clientName: sanitizeInput(formData.clientName),
+        email: sanitizeInput(formData.email),
+        origin: sanitizeInput(formData.origin),
+        destination: sanitizeInput(formData.destination),
+        passengerName: sanitizeInput(formData.passengerName),
+      };
+      const result = await createRequest(sanitizedData);
       setSubmitSuccess(`✅ Solicitud #${result.id} creada exitosamente`);
 
       // Resetear formulario
@@ -200,8 +219,6 @@ export default function TravelRequestForm({ onSuccess }) {
       setClientSearch('');
       setErrors({});
       fetchNextId();
-
-      if (onSuccess) onSuccess();
     } catch (err) {
       setSubmitError(`❌ ${err.message}`);
     } finally {

@@ -2,17 +2,36 @@
 
 import { useState, useEffect } from 'react';
 import { getAllRequests, deleteRequest } from '@/services/api';
+import DOMPurify from 'isomorphic-dompurify';
 
-export default function TravelRequestList() {
-  const [requests, setRequests] = useState([]);
-  const [filteredRequests, setFilteredRequests] = useState([]);
+/**
+ * Sanitiza un string para prevenir ataques XSS antes de mostrarlo en la UI.
+ * Usa DOMPurify para limpiar cualquier código HTML/JS malicioso.
+ */
+const sanitize = (value) => {
+  if (!value) return '-';
+  return DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [] });
+};
+
+/**
+ * Client Component que recibe datos pre-renderizados del servidor (SSR)
+ * a través de initialData, y permite interactividad (filtrar, eliminar).
+ */
+export default function TravelRequestList({ initialData = [] }) {
+  // Usar los datos del servidor como estado inicial (hidratación SSR)
+  const [requests, setRequests] = useState(initialData);
+  const [filteredRequests, setFilteredRequests] = useState(initialData);
   const [statusFilter, setStatusFilter] = useState('todas');
-  const [loading, setLoading] = useState(true);
+  // Si hay datos iniciales del SSR, no mostrar loading
+  const [loading, setLoading] = useState(initialData.length === 0);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    fetchRequests();
+    // Solo hacer fetch del cliente si no hay datos del SSR
+    if (initialData.length === 0) {
+      fetchRequests();
+    }
   }, []);
 
   useEffect(() => {
@@ -151,12 +170,12 @@ export default function TravelRequestList() {
               {filteredRequests.map((req) => (
                 <tr key={req.id}>
                   <td><strong>#{req.id}</strong></td>
-                  <td>{req.clientDni}</td>
-                  <td>{req.clientName}</td>
-                  <td>{req.origin}</td>
-                  <td>{req.destination}</td>
+                  <td>{sanitize(req.clientDni)}</td>
+                  <td>{sanitize(req.clientName)}</td>
+                  <td>{sanitize(req.origin)}</td>
+                  <td>{sanitize(req.destination)}</td>
                   <td>{getTripTypeLabel(req.tripType)}</td>
-                  <td>{req.passengerName || '-'}</td>
+                  <td>{sanitize(req.passengerName)}</td>
                   <td>{formatDateTime(req.departureDateTime)}</td>
                   <td>{formatDateTime(req.returnDateTime)}</td>
                   <td>{formatDateTime(req.registrationDateTime)}</td>

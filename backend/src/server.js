@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const travelRequestRoutes = require('./routes/travelRequest.routes');
 const { errorHandler } = require('./middleware/errorHandler');
+const { sanitizeMiddleware } = require('./utils/sanitize');
 const config = require('./config/config');
 
 const app = express();
@@ -14,6 +15,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Middleware de sanitización XSS: limpia todas las entradas del body
+// antes de que lleguen a los controladores (prevención de inyección de código)
+app.use(sanitizeMiddleware);
 
 // Rutas de solicitudes de viaje
 app.use('/api/travel-requests', travelRequestRoutes);

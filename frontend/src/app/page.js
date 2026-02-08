@@ -1,38 +1,48 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+/**
+ * Página principal - Server Component (SSR)
+ * Los datos se obtienen en el servidor antes de enviar el HTML al cliente.
+ * Esto mejora SEO, accesibilidad y tiempos de carga inicial.
+ */
 import Navbar from '@/components/Navbar';
-import { getAllRequests } from '@/services/api';
 import Link from 'next/link';
 
-export default function HomePage() {
-  const [stats, setStats] = useState({
-    total: 0,
-    pendiente: 0,
-    enProceso: 0,
-    finalizada: 0,
-  });
-  const [loading, setLoading] = useState(true);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+/**
+ * Función asíncrona que se ejecuta en el SERVIDOR.
+ * Next.js renderiza este componente en el servidor (SSR) y envía
+ * el HTML completo al navegador, incluyendo los datos ya resueltos.
+ */
+async function fetchStats() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/travel-requests`, {
+      cache: 'no-store', // Siempre obtener datos frescos desde el servidor
+    });
+    const data = await res.json();
 
-  const fetchStats = async () => {
-    try {
-      const data = await getAllRequests();
-      setStats({
-        total: data.length,
-        pendiente: data.filter(r => r.status === 'pendiente').length,
-        enProceso: data.filter(r => r.status === 'en proceso').length,
-        finalizada: data.filter(r => r.status === 'finalizada').length,
-      });
-    } catch (err) {
-      console.error('Error cargando estadísticas:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!data.success) return { total: 0, pendiente: 0, enProceso: 0, finalizada: 0 };
+
+    const requests = data.data;
+    return {
+      total: requests.length,
+      pendiente: requests.filter(r => r.status === 'pendiente').length,
+      enProceso: requests.filter(r => r.status === 'en proceso').length,
+      finalizada: requests.filter(r => r.status === 'finalizada').length,
+    };
+  } catch (err) {
+    console.error('Error SSR cargando estadísticas:', err.message);
+    return { total: 0, pendiente: 0, enProceso: 0, finalizada: 0 };
+  }
+}
+
+/**
+ * Server Component: se ejecuta en el servidor de Next.js.
+ * El HTML se genera con los datos ya resueltos y se envía al navegador.
+ * No usa useState ni useEffect — todo ocurre en el servidor.
+ */
+export default async function HomePage() {
+  // Esta llamada ocurre en el SERVIDOR, no en el navegador
+  const stats = await fetchStats();
 
   return (
     <div className="app-container">
@@ -41,6 +51,7 @@ export default function HomePage() {
         <div className="page-header">
           <h2>✈️ Panel de Control</h2>
           <p>Bienvenido al sistema de gestión de solicitudes de viaje</p>
+          <small className="ssr-badge">🖥️ Página renderizada desde el servidor (SSR)</small>
         </div>
 
         <div className="dashboard-stats">
@@ -48,28 +59,28 @@ export default function HomePage() {
             <div className="stat-icon total">📊</div>
             <div className="stat-info">
               <h4>Total Solicitudes</h4>
-              <div className="stat-number">{loading ? '...' : stats.total}</div>
+              <div className="stat-number">{stats.total}</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon pendiente">🟡</div>
             <div className="stat-info">
               <h4>Pendientes</h4>
-              <div className="stat-number">{loading ? '...' : stats.pendiente}</div>
+              <div className="stat-number">{stats.pendiente}</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon proceso">🔵</div>
             <div className="stat-info">
               <h4>En Proceso</h4>
-              <div className="stat-number">{loading ? '...' : stats.enProceso}</div>
+              <div className="stat-number">{stats.enProceso}</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon finalizada">🟢</div>
             <div className="stat-info">
               <h4>Finalizadas</h4>
-              <div className="stat-number">{loading ? '...' : stats.finalizada}</div>
+              <div className="stat-number">{stats.finalizada}</div>
             </div>
           </div>
         </div>

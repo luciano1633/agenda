@@ -15,34 +15,6 @@
       "email": "ecastro@mail.com"
     },
     {
-      "id": 1002,
-      "clientDni": "19544786-1",
-      "clientName": "luciano alexander rivera carrera",
-      "origin": "santiago",
-      "destination": "españa",
-      "tripType": "turismo",
-      "passengerName": "luciano",
-      "departureDateTime": "2026-02-08T18:35",
-      "returnDateTime": "2026-02-25T19:00",
-      "registrationDateTime": "2026-02-08T21:34:02.187Z",
-      "status": "en proceso",
-      "email": "lu.riverac@duocuc.cl"
-    },
-    {
-      "id": 1003,
-      "clientDni": "19544786-1",
-      "clientName": "Fabian Gamboa",
-      "origin": "Valparaiso, Chile",
-      "destination": "Lima, Peru",
-      "tripType": "turismo",
-      "passengerName": "Yasna Plaza Morales",
-      "departureDateTime": "2025-10-01T08:00:00",
-      "returnDateTime": "2025-10-15T20:00:00",
-      "registrationDateTime": "2026-02-08T21:43:04.478Z",
-      "status": "en proceso",
-      "email": "fgamboa@mail.com"
-    },
-    {
       "id": 1004,
       "clientDni": "19544786-1",
       "clientName": "Fabian Gamboa",
@@ -57,5 +29,5 @@
       "email": "fgamboa@mail.com"
     }
   ],
-  "nextId": 1005
+  "nextId": 1006
 }
