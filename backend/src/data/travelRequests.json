@@ -2,18 +2,60 @@
   "requests": [
     {
       "id": 1001,
+      "clientDni": "16414595-0",
+      "clientName": "Esteban Castro Paredes",
+      "origin": "Santiago, Chile",
+      "destination": "Madrid, España",
+      "tripType": "negocios",
+      "passengerName": "Fabián Gamboa Martínez",
+      "departureDateTime": "2025-09-15T10:00:00",
+      "returnDateTime": "2025-12-21T17:00:00",
+      "registrationDateTime": "2026-02-08T21:29:16.873Z",
+      "status": "pendiente",
+      "email": "ecastro@mail.com"
+    },
+    {
+      "id": 1002,
       "clientDni": "19544786-1",
       "clientName": "luciano alexander rivera carrera",
-      "origin": "Santiago, Chile",
-      "destination": "Buenos Aires, Argentina",
+      "origin": "santiago",
+      "destination": "españa",
       "tripType": "turismo",
-      "passengerName": "Fabián Gamboa Martínez",
-      "departureDateTime": "2026-02-01T19:00",
-      "returnDateTime": "2026-02-02T19:00",
-      "registrationDateTime": "2026-02-01T22:41:41.218Z",
-      "status": "finalizada",
-      "email": "luciano@hotmail.com"
+      "passengerName": "luciano",
+      "departureDateTime": "2026-02-08T18:35",
+      "returnDateTime": "2026-02-25T19:00",
+      "registrationDateTime": "2026-02-08T21:34:02.187Z",
+      "status": "en proceso",
+      "email": "lu.riverac@duocuc.cl"
+    },
+    {
+      "id": 1003,
+      "clientDni": "19544786-1",
+      "clientName": "Fabian Gamboa",
+      "origin": "Valparaiso, Chile",
+      "destination": "Lima, Peru",
+      "tripType": "turismo",
+      "passengerName": "Yasna Plaza Morales",
+      "departureDateTime": "2025-10-01T08:00:00",
+      "returnDateTime": "2025-10-15T20:00:00",
+      "registrationDateTime": "2026-02-08T21:43:04.478Z",
+      "status": "en proceso",
+      "email": "fgamboa@mail.com"
+    },
+    {
+      "id": 1004,
+      "clientDni": "19544786-1",
+      "clientName": "Fabian Gamboa",
+      "origin": "Valparaiso, Chile",
+      "destination": "Lima, Peru",
+      "tripType": "turismo",
+      "passengerName": "Yasna Plaza Morales",
+      "departureDateTime": "2025-10-01T08:00:00",
+      "returnDateTime": "2025-10-15T20:00:00",
+      "registrationDateTime": "2026-02-08T21:44:03.545Z",
+      "status": "en proceso",
+      "email": "fgamboa@mail.com"
     }
   ],
-  "nextId": 1002
+  "nextId": 1005
 }

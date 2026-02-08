@@ -51,6 +51,7 @@ const validateTravelRequest = (req, res, next) => {
     origin,
     destination,
     tripType,
+    passengerName,
     departureDateTime,
     returnDateTime,
     status,
@@ -82,6 +83,10 @@ const validateTravelRequest = (req, res, next) => {
     errors.push('El tipo de viaje es requerido');
   } else if (!validTripTypes.includes(tripType.toLowerCase())) {
     errors.push(`El tipo de viaje debe ser: ${validTripTypes.join(', ')}`);
+  }
+
+  if (!passengerName || passengerName.trim() === '') {
+    errors.push('El nombre del pasajero es requerido');
   }
 
   if (!departureDateTime) {

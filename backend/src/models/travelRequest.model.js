@@ -1,11 +1,26 @@
 /**
  * Modelo de Solicitud de Viaje
  * Gestiona las operaciones CRUD para las solicitudes de viaje
+ * Persistencia simulada mediante archivo JSON (mock)
  */
 const fs = require('fs');
 const path = require('path');
 
 const dataFilePath = path.join(__dirname, '../data/travelRequests.json');
+
+/**
+ * Datos mock de clientes pre-cargados para búsqueda
+ */
+const mockClients = [
+  { dni: '16414595-0', name: 'Esteban Castro Paredes', email: 'ecastro@mail.com' },
+  { dni: '19544786-1', name: 'Fabián Gamboa Martínez', email: 'fgamboa@mail.com' },
+  { dni: '18223344-5', name: 'Yasna Plaza Morales', email: 'yplaza@mail.com' },
+  { dni: '17889922-3', name: 'Fernanda Quintana Rivera', email: 'fquintana@mail.com' },
+  { dni: '20112233-K', name: 'Carlos Mendoza López', email: 'cmendoza@mail.com' },
+  { dni: '15667788-2', name: 'María José Soto Díaz', email: 'mjsoto@mail.com' },
+  { dni: '21334455-7', name: 'Andrés Vargas Fuentes', email: 'avargas@mail.com' },
+  { dni: '14998877-6', name: 'Catalina Rojas Muñoz', email: 'crojas@mail.com' },
+];
 
 /**
  * Lee los datos del archivo JSON
@@ -15,7 +30,6 @@ const readData = () => {
     const data = fs.readFileSync(dataFilePath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    // Si el archivo no existe, crear estructura inicial
     const initialData = { requests: [], nextId: 1001 };
     fs.writeFileSync(dataFilePath, JSON.stringify(initialData, null, 2));
     return initialData;
@@ -58,6 +72,7 @@ const createRequest = (requestData) => {
     origin: requestData.origin,
     destination: requestData.destination,
     tripType: requestData.tripType,
+    passengerName: requestData.passengerName,
     departureDateTime: requestData.departureDateTime,
     returnDateTime: requestData.returnDateTime,
     registrationDateTime: new Date().toISOString(),
@@ -114,20 +129,32 @@ const deleteRequest = (id) => {
 };
 
 /**
- * Busca clientes por nombre (para el campo de búsqueda)
+ * Busca clientes mock por nombre o DNI (para el campo de búsqueda)
  */
 const searchClients = (query) => {
-  const data = readData();
-  const uniqueClients = [...new Map(
-    data.requests.map(req => [req.clientDni, { dni: req.clientDni, name: req.clientName }])
-  ).values()];
+  if (!query) return mockClients;
   
-  if (!query) return uniqueClients;
-  
-  return uniqueClients.filter(client => 
+  return mockClients.filter(client => 
     client.name.toLowerCase().includes(query.toLowerCase()) ||
     client.dni.includes(query)
   );
+};
+
+/**
+ * Obtiene el siguiente ID disponible
+ */
+const getNextId = () => {
+  const data = readData();
+  return data.nextId;
+};
+
+/**
+ * Filtra solicitudes por estado
+ */
+const getRequestsByStatus = (status) => {
+  const data = readData();
+  if (!status || status === 'todas') return data.requests;
+  return data.requests.filter(req => req.status === status);
 };
 
 module.exports = {
@@ -136,5 +163,7 @@ module.exports = {
   createRequest,
   updateRequest,
   deleteRequest,
-  searchClients
+  searchClients,
+  getNextId,
+  getRequestsByStatus
 };

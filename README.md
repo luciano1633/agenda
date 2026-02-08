@@ -1,127 +1,92 @@
-# Agencia de Viajes Oeste - Portal de Reservas
+# Agencia de Viajes Oeste - Sistema de Solicitudes de Viaje
 
-Portal web para la gestión de reservas de vuelos y solicitudes de viaje de la Agencia de Viajes Oeste.
-
-## 🌐 Novedades: Sistema de Solicitudes de Viaje
-
-- **Gestión de Solicitudes**: Registra, edita y elimina solicitudes de viaje personalizadas para clientes
-- **Historial de Viajes**: Visualiza todos los viajes finalizados en un formato de tarjetas
-- **Validación Completa**: Validaciones en frontend y backend (DNI/RUT, email, fechas)
-- **Login con Google**: Inicia sesión usando tu cuenta de Google de manera segura
-- **Preparado para la nube**: Configuración flexible para despliegue en producción
-
+Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend) y **Node.js/Express** (backend).
 
 ## 🚀 Características
 
-### Sistema de Autenticación
-- **Registro de usuarios**: Formulario con validación de email y contraseña
-- **Inicio de sesión**: Autenticación con JWT (JSON Web Tokens) o Google OAuth
-- **Login con Google**: Acceso rápido y seguro usando tu cuenta de Google
-- **Vista protegida**: Dashboard accesible solo para usuarios autenticados
-- **Cierre de sesión**: Eliminación del token/sesión y redirección al login
-
 ### Sistema de Solicitudes de Viaje
-- **Formulario completo**: Registro de solicitudes con todos los datos requeridos
-  - ID automático y correlativo
-  - DNI/RUT del cliente (formato chileno: XXXXXXXX-X)
-  - Nombre del cliente
-  - Email del cliente
-  - Origen y destino (selector de ciudades)
-  - Tipo de viaje (negocios, turismo, otros)
-  - Fecha y hora de salida/regreso
-  - Estado de la solicitud (pendiente, en proceso, finalizada)
-- **Listado de solicitudes**: Tabla con todas las solicitudes registradas
-- **Edición y eliminación**: Gestión completa de solicitudes
-- **Historial**: Visualización de viajes finalizados con diseño de tarjetas
+- **Formulario completo** de registro con todos los campos requeridos:
+  - Identificador de solicitud automático y correlativo (Ej: 1001, 1002...)
+  - DNI / Identificación del cliente con validación de formato chileno (Ej: 16414595-0)
+  - Nombre del cliente (Ej: Esteban Castro Paredes)
+  - Email del cliente con validación de formato
+  - Origen (Ej: Santiago, Chile)
+  - Destino (Ej: Madrid, España)
+  - Tipo de viaje: negocios, turismo u otros (control de listado/select)
+  - Nombre del pasajero con campo de búsqueda sobre clientes mock
+  - Fecha y hora de salida (Ej: lunes 15 de septiembre del 2025 a las 10:00)
+  - Fecha y hora de regreso (Ej: domingo 21 de diciembre del 2025 a las 17:00)
+  - Fecha y hora de registro de la solicitud (generada automáticamente en tiempo real)
+  - Estado de la solicitud: pendiente, en proceso o finalizada (botones de opción/radio)
+- **Listado de solicitudes** con tabla completa de todos los registros
+- **Filtrado por estado** (todas, pendiente, en proceso, finalizada)
+- **Eliminación** de solicitudes
+- **Panel de control** con estadísticas en tiempo real
 
-### Validaciones
-- Campos vacíos y formato de email
-- Formato de DNI/RUT chileno
-- Fechas (regreso posterior a salida)
-- Validaciones en cliente y servidor
+### Validaciones (Frontend y Backend)
+- Campos vacíos en todos los campos requeridos
+- Formato de email (`usuario@dominio.ext`)
+- Formato de DNI/RUT chileno (`XXXXXXXX-X`)
+- Fecha de regreso posterior a la de salida
+- Tipos de viaje y estados válidos
+- Nombre del cliente con mínimo 3 caracteres
 
-### Seguridad
-- Contraseñas encriptadas con bcrypt
-- Tokens JWT
-- Rate limiting
-- Sanitización de entradas
+### Persistencia de Datos
+- Almacenamiento simulado (mock) mediante archivo JSON local (`travelRequests.json`)
+- 8 clientes mock precargados para el campo de búsqueda de pasajeros
+- ID correlativo persistente que se incrementa automáticamente
 
 ## 📋 Requisitos
 
 - Node.js 18 o superior
-- npm o yarn
-
+- npm
 
 ## 🛠️ Instalación y Ejecución
 
-### Opción 1: Iniciar ambos servidores (Recomendado)
+### 1. Instalar dependencias
 
-**Terminal 1 - Backend:**
 ```bash
+# Backend
 cd backend
 npm install
-npm run dev
-```
 
-**Terminal 2 - Frontend:**
-```bash
+# Frontend
+cd ../frontend
 npm install
-npm run dev
 ```
 
-### Opción 2: Comandos separados
+### 2. Iniciar los servidores
 
-1. **Instalar dependencias del backend:**
+**Terminal 1 - Backend (puerto 3001):**
 ```bash
 cd backend
-npm install
-```
-
-2. **Iniciar el servidor backend:**
-```bash
 npm run dev
 ```
-El servidor estará disponible en `http://localhost:3001`
 
-3. **En otra terminal, instalar dependencias del frontend:**
+**Terminal 2 - Frontend (puerto 3000):**
 ```bash
-cd ..
-npm install
-```
-
-4. **Iniciar el frontend:**
-```bash
+cd frontend
 npm run dev
 ```
-La aplicación estará disponible en `http://localhost:5173`
 
+### 3. Acceder a la aplicación
 
-## 🔗 Endpoints del Backend
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
 
-### Autenticación
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/api/auth/register` | Registrar nuevo usuario |
-| POST | `/api/auth/login` | Iniciar sesión |
-| POST | `/api/auth/logout` | Cerrar sesión (requiere token) |
-| GET | `/api/auth/verify` | Verificar token (requiere token) |
-
-### OAuth (Google)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/oauth/google` | Iniciar login con Google |
-| GET | `/api/oauth/callback` | Callback de Google OAuth |
-| GET | `/api/oauth/logout` | Cerrar sesión Google/local |
+## 🔗 Endpoints de la API (Backend)
 
 ### Solicitudes de Viaje
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/travel-requests` | Obtener todas las solicitudes |
+| GET | `/api/travel-requests?status=pendiente` | Filtrar solicitudes por estado |
 | GET | `/api/travel-requests/:id` | Obtener una solicitud por ID |
+| GET | `/api/travel-requests/next-id` | Obtener el siguiente ID correlativo |
+| GET | `/api/travel-requests/clients/search?q=nombre` | Buscar clientes por nombre o DNI |
 | POST | `/api/travel-requests` | Crear nueva solicitud |
-| PUT | `/api/travel-requests/:id` | Actualizar solicitud |
+| PUT | `/api/travel-requests/:id` | Actualizar solicitud existente |
 | DELETE | `/api/travel-requests/:id` | Eliminar solicitud |
-| GET | `/api/travel-requests/clients/search` | Buscar clientes |
 
 ### Utilidades
 | Método | Ruta | Descripción |
@@ -130,141 +95,93 @@ La aplicación estará disponible en `http://localhost:5173`
 
 ## 🔑 Uso de la Aplicación
 
-1. **Registro**: Accede a `/register` y crea una cuenta con tu email y contraseña (mínimo 6 caracteres)
-2. **Login**: Usa tus credenciales en `/login` para obtener un token JWT, o usa el botón de Google
-3. **Dashboard**: Si el login es exitoso, serás redirigido al dashboard
-4. **Solicitudes de Viaje**: Ve a la pestaña "✈️ Solicitudes de Viaje" para registrar y gestionar solicitudes
-5. **Historial**: Ve a la pestaña "📋 Historial" para ver los viajes finalizados
-6. **Logout**: Usa el botón "Cerrar Sesión" para eliminar el token y volver al login
+1. **Inicio**: Accede a `http://localhost:3000` para ver el panel de control con estadísticas
+2. **Nueva Solicitud**: Haz clic en "Nueva Solicitud" o navega a `/solicitudes/nueva` para registrar una solicitud de viaje
+3. **Buscar Pasajero**: En el campo "Nombre del Pasajero", escribe al menos 2 caracteres para buscar entre los clientes registrados
+4. **Listado**: Navega a `/solicitudes` para ver todas las solicitudes registradas
+5. **Filtrar**: Usa el selector de estado para filtrar solicitudes por pendiente, en proceso o finalizada
 
 ## 📁 Estructura del Proyecto
 
 ```
-├── backend/                          # Servidor Node.js/Express
+├── backend/                              # Servidor Node.js/Express (API REST)
 │   ├── src/
 │   │   ├── config/
-│   │   │   ├── config.js             # Configuración del servidor
-│   │   │   └── passport.js           # Configuración Google OAuth
+│   │   │   └── config.js                 # Configuración (puerto, CORS)
 │   │   ├── controllers/
-│   │   │   ├── auth.controller.js    # Lógica de autenticación
-│   │   │   └── travelRequest.controller.js  # Lógica de solicitudes
+│   │   │   └── travelRequest.controller.js  # Lógica de solicitudes (CRUD)
 │   │   ├── data/
-│   │   │   ├── users.json            # Almacenamiento de usuarios
-│   │   │   └── travelRequests.json   # Almacenamiento de solicitudes
+│   │   │   └── travelRequests.json       # Almacenamiento mock (persistencia local)
 │   │   ├── middleware/
-│   │   │   ├── auth.middleware.js    # Verificación de JWT
-│   │   │   ├── errorHandler.js       # Manejo de errores
-│   │   │   ├── globalRateLimiter.js  # Rate limiting
-│   │   │   └── travelValidation.js   # Validación de solicitudes
+│   │   │   ├── errorHandler.js           # Manejo centralizado de errores
+│   │   │   └── travelValidation.js       # Validación de campos y formatos
 │   │   ├── models/
-│   │   │   ├── user.model.js         # Modelo de usuario
-│   │   │   └── travelRequest.model.js # Modelo de solicitud
+│   │   │   └── travelRequest.model.js    # Modelo de solicitud + clientes mock
 │   │   ├── routes/
-│   │   │   ├── auth.routes.js        # Rutas de autenticación
-│   │   │   ├── oauth.routes.js       # Rutas de OAuth
-│   │   │   └── travelRequest.routes.js # Rutas de solicitudes
-│   │   └── server.js                 # Punto de entrada
+│   │   │   └── travelRequest.routes.js   # Definición de rutas API
+│   │   └── server.js                     # Punto de entrada del servidor
 │   └── package.json
 │
-├── src/                              # Aplicación React (Frontend)
-│   ├── components/
-│   │   ├── ProtectedRoute.jsx        # Componente para rutas protegidas
-│   │   ├── TravelRequestForm.jsx     # Formulario de solicitudes
-│   │   ├── TravelRequestList.jsx     # Lista de solicitudes
-│   │   └── TravelHistory.jsx         # Historial de viajes
-│   ├── config/
-│   │   └── api.config.js             # Configuración de la API
-│   ├── context/
-│   │   └── AuthContext.jsx           # Contexto de autenticación
-│   ├── hooks/
-│   │   ├── useAuth.js                # Hook de autenticación
-│   │   ├── useGoogleSession.js       # Hook para sesión Google
-│   │   ├── useRateLimiter.js         # Hook para rate limiting
-│   │   └── useTravelRequests.js      # Hook para solicitudes
-│   ├── pages/
-│   │   ├── Login.jsx                 # Página de inicio de sesión
-│   │   ├── Register.jsx              # Página de registro
-│   │   ├── Dashboard.jsx             # Panel principal
-│   │   ├── TravelRequests.jsx        # Página de solicitudes
-│   │   └── OauthWelcome.jsx          # Bienvenida OAuth
-│   ├── services/
-│   │   └── travelRequestService.js   # Servicio API de solicitudes
-│   ├── styles/
-│   │   ├── Auth.css                  # Estilos de autenticación
-│   │   ├── Dashboard.css             # Estilos del dashboard
-│   │   └── TravelRequest.css         # Estilos de solicitudes
-│   └── utils/
-│       ├── fetchWithRetry.js         # Utilidad para peticiones HTTP
-│       └── validation.js             # Validaciones del formulario
+├── frontend/                             # Aplicación Next.js (React)
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── globals.css               # Estilos globales (CSS responsive)
+│   │   │   ├── layout.js                 # Layout raíz de la aplicación
+│   │   │   ├── page.js                   # Página principal (panel de control)
+│   │   │   └── solicitudes/
+│   │   │       ├── page.js               # Listado de solicitudes con filtros
+│   │   │       └── nueva/
+│   │   │           └── page.js           # Formulario de nueva solicitud
+│   │   ├── components/
+│   │   │   ├── Navbar.js                 # Barra de navegación
+│   │   │   ├── TravelRequestForm.js      # Formulario de solicitud de viaje
+│   │   │   └── TravelRequestList.js      # Tabla de solicitudes con filtro
+│   │   └── services/
+│   │       └── api.js                    # Servicio de conexión con la API
+│   ├── next.config.js
+│   ├── jsconfig.json
+│   └── package.json
 │
-├── package.json
 └── README.md
 ```
 
 ## 🔧 Tecnologías Utilizadas
 
 ### Frontend
-- React 18
-- Vite
-- React Router DOM
-- CSS3 (diseño responsivo)
+- **Next.js 14** (App Router)
+- **React 18** (componentes client-side con `'use client'`)
+- **CSS3** (diseño responsivo, grid, flexbox)
 
 ### Backend
-- Node.js
-- Express.js
-- JSON Web Tokens (JWT)
-- Passport.js (Google OAuth)
-- bcryptjs (encriptación)
-
+- **Node.js**
+- **Express.js**
+- **Archivo JSON** (persistencia mock local)
+- **CORS** (comunicación cross-origin)
+- **UUID** (generación de identificadores)
 
 ## 📝 Funcionalidades Implementadas
 
-### Registro
-- Validación de email (formato)
-- Validación de contraseña (mínimo 6 caracteres)
-- Confirmación de contraseña
-- Almacenamiento de token en localStorage
-- Redirección al login tras registro exitoso
+### Panel de Control (Página principal)
+- Estadísticas en tiempo real (total, pendientes, en proceso, finalizadas)
+- Accesos rápidos a nueva solicitud y listado
+- Diseño con tarjetas informativas
 
+### Formulario de Solicitud de Viaje
+- ID automático correlativo (obtenido del backend)
+- Fecha y hora de registro en tiempo real (se actualiza cada segundo)
+- Validación completa de todos los campos antes del envío
+- Campo de búsqueda de pasajeros con dropdown de resultados
+- Tipo de viaje con control de listado (select)
+- Estado con botones de opción (radio buttons)
+- Botones de limpiar y registrar
 
-### Login
-- Validación de campos vacíos
-- Validación de formato de email
-- Login local (JWT) y con Google OAuth
-- Almacenamiento de token/sesión en localStorage o cookie
-- Redirección al dashboard tras login exitoso
-- Mensajes de error para credenciales inválidas
-
-### Google OAuth
-- Botón de login con Google en el frontend
-- Redirección automática tras autenticación exitosa
-- Soporte para cierre de sesión Google/local
-
-### Despliegue en la nube
-- Configuración lista para plataformas cloud (variables de entorno, CORS, etc.)
-- Documentación para adaptar URLs y credenciales según el entorno
-### Dashboard
-- Mensaje de bienvenida personalizado
-- Navegación por pestañas (Inicio, Solicitudes, Historial)
-- Cards interactivas para acceso rápido
-- Botón de cierre de sesión
-- Diseño responsivo
-
-### Solicitudes de Viaje
-- Formulario de registro con validaciones
-- ID automático y correlativo
-- Listado en tabla con todas las solicitudes
-- Edición y eliminación de solicitudes
-- Estados: pendiente, en proceso, finalizada
-- Validación de DNI/RUT chileno
-- Validación de fechas
-
-### Historial de Viajes
-- Visualización de viajes finalizados
-- Tarjetas con información completa
-- Ruta del viaje con duración
-- Datos del cliente
-- Fechas de salida y regreso
+### Listado de Solicitudes
+- Tabla con todas las columnas: ID, DNI, nombre, origen, destino, tipo, pasajero, salida, regreso, registro, estado
+- Filtro por estado con selector desplegable
+- Contador de resultados filtrados
+- Badges de color por estado
+- Botón de eliminar por solicitud
+- Diseño responsive con scroll horizontal en pantallas pequeñas
 
 ## 📄 Licencia
 

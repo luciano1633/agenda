@@ -9,10 +9,17 @@ const { validateTravelRequest, validatePartialUpdate } = require('../middleware/
 
 /**
  * @route   GET /api/travel-requests
- * @desc    Obtener todas las solicitudes de viaje
- * @access  Public (o protegido según configuración)
+ * @desc    Obtener todas las solicitudes (filtrar por ?status=pendiente)
+ * @access  Public
  */
 router.get('/', travelRequestController.getAllRequests);
+
+/**
+ * @route   GET /api/travel-requests/next-id
+ * @desc    Obtener el siguiente ID correlativo disponible
+ * @access  Public
+ */
+router.get('/next-id', travelRequestController.getNextId);
 
 /**
  * @route   GET /api/travel-requests/clients/search

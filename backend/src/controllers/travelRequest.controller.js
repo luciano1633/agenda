@@ -5,12 +5,15 @@
 const TravelRequest = require('../models/travelRequest.model');
 
 /**
- * Obtener todas las solicitudes de viaje
- * GET /api/travel-requests
+ * Obtener todas las solicitudes de viaje (con filtro opcional por estado)
+ * GET /api/travel-requests?status=pendiente
  */
 const getAllRequests = (req, res) => {
   try {
-    const requests = TravelRequest.getAllRequests();
+    const { status } = req.query;
+    const requests = status 
+      ? TravelRequest.getRequestsByStatus(status)
+      : TravelRequest.getAllRequests();
     
     res.json({
       success: true,
@@ -159,11 +162,32 @@ const searchClients = (req, res) => {
   }
 };
 
+/**
+ * Obtener el siguiente ID disponible
+ * GET /api/travel-requests/next-id
+ */
+const getNextId = (req, res) => {
+  try {
+    const nextId = TravelRequest.getNextId();
+    res.json({
+      success: true,
+      data: { nextId }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener el siguiente ID',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllRequests,
   getRequestById,
   createRequest,
   updateRequest,
   deleteRequest,
-  searchClients
+  searchClients,
+  getNextId
 };

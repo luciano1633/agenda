@@ -1,13 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/auth.routes');
-const oauthRoutes = require('./routes/oauth.routes');
 const travelRequestRoutes = require('./routes/travelRequest.routes');
 const { errorHandler } = require('./middleware/errorHandler');
-const { globalLimiter } = require('./middleware/globalRateLimiter');
 const config = require('./config/config');
-const session = require('express-session');
-const passport = require('./config/passport');
 
 const app = express();
 const PORT = config.PORT;
@@ -18,23 +13,9 @@ app.use(cors({
   credentials: true
 }));
 
-// Middleware global de rate limiting
-app.use(globalLimiter);
 app.use(express.json());
 
-// Configuración de sesión para Passport
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'session_secret_key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Cambiar a true si usas HTTPS
-}));
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/oauth', oauthRoutes);
+// Rutas de solicitudes de viaje
 app.use('/api/travel-requests', travelRequestRoutes);
 
 // Ruta de verificación de salud del servidor
@@ -62,8 +43,11 @@ app.listen(PORT, () => {
   console.log(`   Ejecutándose en: http://localhost:${PORT}`);
   console.log(`   Estado: http://localhost:${PORT}/api/health`);
   console.log(`\n📋 Endpoints disponibles:`);
-  console.log(`   POST /api/auth/register - Registrar usuario`);
-  console.log(`   POST /api/auth/login    - Iniciar sesión`);
-  console.log(`   POST /api/auth/logout   - Cerrar sesión`);
-  console.log(`   GET  /api/auth/verify   - Verificar token\n`);
+  console.log(`   GET    /api/travel-requests          - Listar solicitudes`);
+  console.log(`   GET    /api/travel-requests?status=X  - Filtrar por estado`);
+  console.log(`   GET    /api/travel-requests/next-id   - Siguiente ID`);
+  console.log(`   GET    /api/travel-requests/clients/search?q=X - Buscar clientes`);
+  console.log(`   POST   /api/travel-requests           - Crear solicitud`);
+  console.log(`   PUT    /api/travel-requests/:id       - Actualizar solicitud`);
+  console.log(`   DELETE /api/travel-requests/:id       - Eliminar solicitud\n`);
 });
