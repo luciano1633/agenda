@@ -160,10 +160,22 @@ export default function TravelRequestForm() {
 
     if (!formData.departureDateTime) {
       newErrors.departureDateTime = 'La fecha de salida es requerida';
+    } else {
+      const departure = new Date(formData.departureDateTime);
+      const now = new Date();
+      if (departure < now) {
+        newErrors.departureDateTime = 'La fecha de salida no puede ser en el pasado';
+      }
     }
 
     if (!formData.returnDateTime) {
       newErrors.returnDateTime = 'La fecha de regreso es requerida';
+    } else {
+      const returnDate = new Date(formData.returnDateTime);
+      const now = new Date();
+      if (returnDate < now) {
+        newErrors.returnDateTime = 'La fecha de regreso no puede ser en el pasado';
+      }
     }
 
     if (formData.departureDateTime && formData.returnDateTime) {

@@ -102,6 +102,23 @@ const validateTravelRequest = (req, res, next) => {
   }
 
   // Validar que la fecha de regreso sea posterior a la de salida
+  // Validar que las fechas no sean en el pasado
+  if (departureDateTime && validateDateTime(departureDateTime)) {
+    const departure = new Date(departureDateTime);
+    const now = new Date();
+    if (departure < now) {
+      errors.push('La fecha de salida no puede ser en el pasado');
+    }
+  }
+
+  if (returnDateTime && validateDateTime(returnDateTime)) {
+    const returnDate = new Date(returnDateTime);
+    const now = new Date();
+    if (returnDate < now) {
+      errors.push('La fecha de regreso no puede ser en el pasado');
+    }
+  }
+
   if (departureDateTime && returnDateTime) {
     const departure = new Date(departureDateTime);
     const returnDate = new Date(returnDateTime);

@@ -10,6 +10,7 @@ export default function Navbar() {
     { href: '/', label: 'Inicio', icon: '🏠' },
     { href: '/solicitudes/nueva', label: 'Nueva Solicitud', icon: '➕' },
     { href: '/solicitudes', label: 'Listado', icon: '📋' },
+    { href: '/cliente', label: 'Portal Cliente', icon: '👤' },
   ];
 
   return (

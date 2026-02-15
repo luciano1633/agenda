@@ -1,8 +1,8 @@
 # Agencia de Viajes Oeste - Sistema de Solicitudes de Viaje
 
-Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend) y **Node.js/Express** (backend).
+Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend SSR) y **Node.js/Express** (backend API REST).
 
-## �️ Renderizado desde el Servidor (SSR)
+## 🖥️ Renderizado desde el Servidor (SSR)
 
 Esta aplicación implementa **Server-Side Rendering (SSR)** con Next.js App Router:
 
@@ -14,8 +14,24 @@ Esta aplicación implementa **Server-Side Rendering (SSR)** con Next.js App Rout
 | Página | Tipo | Descripción |
 |--------|------|-------------|
 | `/` (panel de control) | Server Component | Fetch de estadísticas en el servidor |
-| `/solicitudes` (listado) | Server Component | Fetch de solicitudes en el servidor, pasa datos al Client Component |
-| `/solicitudes/nueva` (formulario) | Server Component + Client Component | Layout SSR, formulario interactivo en cliente |
+| `/solicitudes` (listado) | Server Component | Fetch de solicitudes en el servidor con espera simulada 3s |
+| `/solicitudes/nueva` (formulario) | Server Component + Client Component | Layout SSR, formulario interactivo cargado con lazy loading |
+| `/cliente` (portal cliente) | Server Component + Client Component | Layout SSR, vista de consulta cargada con lazy loading |
+
+## ⚡ Carga Diferida con next/dynamic y Lazy Loading
+
+Todos los componentes pesados se cargan de forma diferida usando `next/dynamic`:
+
+| Componente | Página | Skeleton |
+|------------|--------|----------|
+| `DashboardContent` | `/` | `SkeletonDashboard` |
+| `TravelRequestList` | `/solicitudes` | `SkeletonTable` |
+| `TravelRequestForm` | `/solicitudes/nueva` | `SkeletonForm` |
+| `ClientRequestView` | `/cliente` | `SkeletonClientView` |
+
+- Los componentes se cargan **solo cuando el usuario navega a la página** (lazy loading bajo demanda).
+- Mientras se cargan, se muestra un **componente Skeleton** como retroalimentación visual.
+- Las páginas que muestran listados incluyen una **espera simulada de 3 segundos** para demostrar los Skeletons.
 
 ## 🛡️ Sanitización y Protección XSS
 
@@ -125,6 +141,9 @@ npm run dev
 3. **Buscar Pasajero**: En el campo "Nombre del Pasajero", escribe al menos 2 caracteres para buscar entre los clientes registrados
 4. **Listado**: Navega a `/solicitudes` para ver todas las solicitudes registradas
 5. **Filtrar**: Usa el selector de estado para filtrar solicitudes por pendiente, en proceso o finalizada
+6. **Cambiar Estado**: En el listado, usa el selector desplegable en la columna "Estado" para cambiar el estado de cualquier solicitud
+7. **Eliminar**: Haz clic en el botón 🗑️ de la fila correspondiente para eliminar una solicitud
+8. **Portal Cliente**: Navega a `/cliente` para consultar solicitudes por DNI o email (vista de solo lectura)
 
 ## 📁 Estructura del Proyecto
 
@@ -132,39 +151,54 @@ npm run dev
 ├── backend/                              # Servidor Node.js/Express (API REST)
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── config.js                 # Configuración (puerto, CORS)
+│   │   │   └── config.js                 # Configuración (puerto, CORS, JWT)
 │   │   ├── controllers/
+│   │   │   ├── auth.controller.js         # Controlador de autenticación
 │   │   │   └── travelRequest.controller.js  # Lógica de solicitudes (CRUD)
 │   │   ├── data/
-│   │   │   └── travelRequests.json       # Almacenamiento mock (persistencia local)
+│   │   │   ├── travelRequests.json        # Almacenamiento mock (persistencia local)
+│   │   │   └── users.json                 # Datos de usuarios
 │   │   ├── middleware/
-│   │   │   ├── errorHandler.js           # Manejo centralizado de errores
-│   │   │   └── travelValidation.js       # Validación de campos y formatos
+│   │   │   ├── auth.middleware.js          # Verificación de token JWT
+│   │   │   ├── errorHandler.js            # Manejo centralizado de errores
+│   │   │   └── travelValidation.js        # Validación de campos, formatos y fechas
 │   │   ├── models/
-│   │   │   └── travelRequest.model.js    # Modelo de solicitud + clientes mock
+│   │   │   ├── travelRequest.model.js     # Modelo de solicitud + clientes mock
+│   │   │   └── user.model.js              # Modelo de usuario con bcrypt
 │   │   ├── routes/
-│   │   │   └── travelRequest.routes.js   # Definición de rutas API
+│   │   │   ├── auth.routes.js             # Rutas de autenticación
+│   │   │   └── travelRequest.routes.js    # Definición de rutas API
 │   │   ├── utils/
-│   │   │   └── sanitize.js               # Sanitización XSS (middleware + utilidades)
-│   │   └── server.js                     # Punto de entrada del servidor
+│   │   │   ├── passwordStrength.js        # Validación de fortaleza de contraseña
+│   │   │   └── sanitize.js                # Sanitización XSS (middleware + utilidades)
+│   │   └── server.js                      # Punto de entrada del servidor
 │   └── package.json
 │
-├── frontend/                             # Aplicación Next.js (React)
+├── frontend/                              # Aplicación Next.js (SSR + Lazy Loading)
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── globals.css               # Estilos globales (CSS responsive)
-│   │   │   ├── layout.js                 # Layout raíz de la aplicación
-│   │   │   ├── page.js                   # Página principal (panel de control)
+│   │   │   ├── globals.css                # Estilos globales (CSS responsive + Skeletons)
+│   │   │   ├── layout.js                  # Layout raíz de la aplicación
+│   │   │   ├── page.js                    # Panel de control (SSR + dynamic import)
+│   │   │   ├── cliente/
+│   │   │   │   └── page.js                # Portal del cliente (SSR + lazy loading)
 │   │   │   └── solicitudes/
-│   │   │       ├── page.js               # Listado de solicitudes con filtros
+│   │   │       ├── page.js                # Listado con espera simulada 3s + Skeleton
 │   │   │       └── nueva/
-│   │   │           └── page.js           # Formulario de nueva solicitud
+│   │   │           └── page.js            # Formulario con carga diferida + Skeleton
 │   │   ├── components/
-│   │   │   ├── Navbar.js                 # Barra de navegación
-│   │   │   ├── TravelRequestForm.js      # Formulario de solicitud de viaje
-│   │   │   └── TravelRequestList.js      # Tabla de solicitudes con filtro
+│   │   │   ├── ClientRequestView.js       # Vista de consulta para clientes
+│   │   │   ├── DashboardContent.js        # Contenido del dashboard (lazy loaded)
+│   │   │   ├── Navbar.js                  # Barra de navegación
+│   │   │   ├── TravelRequestForm.js       # Formulario de solicitud de viaje
+│   │   │   ├── TravelRequestList.js       # Tabla de solicitudes con filtro y cambio de estado
+│   │   │   └── skeletons/                 # Componentes Skeleton (retroalimentación visual)
+│   │   │       ├── SkeletonClientView.js  # Skeleton para vista cliente
+│   │   │       ├── SkeletonDashboard.js   # Skeleton para dashboard
+│   │   │       ├── SkeletonForm.js        # Skeleton para formulario
+│   │   │       └── SkeletonTable.js       # Skeleton para tabla de solicitudes
 │   │   └── services/
-│   │       └── api.js                    # Servicio de conexión con la API
+│   │       └── api.js                     # Servicio de conexión con la API (CRUD completo)
 │   ├── next.config.js
 │   ├── jsconfig.json
 │   └── package.json
@@ -177,42 +211,58 @@ npm run dev
 ### Frontend
 - **Next.js 14** (App Router con Server Components para SSR)
 - **React 18** (Server Components + Client Components con `'use client'`)
+- **next/dynamic** (carga diferida / lazy loading de componentes)
 - **isomorphic-dompurify** (sanitización XSS compatible con SSR)
-- **CSS3** (diseño responsivo, grid, flexbox)
+- **CSS3** (diseño responsivo, grid, flexbox, animaciones Skeleton)
 
 ### Backend
 - **Node.js**
 - **Express.js**
+- **bcryptjs** (hash de contraseñas)
+- **jsonwebtoken** (autenticación JWT)
 - **xss** (sanitización de entradas contra ataques XSS)
 - **Archivo JSON** (persistencia mock local)
 - **CORS** (comunicación cross-origin)
 
 ## 📝 Funcionalidades Implementadas
 
-### Panel de Control (Página principal) — SSR
+### Panel de Control (Página principal) — SSR + Lazy Loading
 - Estadísticas renderizadas desde el servidor (no requiere AJAX en carga inicial)
-- Accesos rápidos a nueva solicitud y listado
+- Componente `DashboardContent` cargado con `next/dynamic`
+- Skeleton de retroalimentación visual durante la carga
+- Accesos rápidos a nueva solicitud, listado y portal cliente
 - Diseño con tarjetas informativas
 
-### Formulario de Solicitud de Viaje
+### Formulario de Solicitud de Viaje — Lazy Loading + Skeleton
 - ID automático correlativo (obtenido del backend)
 - Fecha y hora de registro en tiempo real (se actualiza cada segundo)
 - Validación completa de todos los campos antes del envío
+- **Validación de fechas pasadas** (salida y regreso no pueden ser en el pasado)
 - **Sanitización XSS** con DOMPurify antes de enviar datos al backend
 - Campo de búsqueda de pasajeros con dropdown de resultados
 - Tipo de viaje con control de listado (select)
 - Estado con botones de opción (radio buttons)
+- Componente cargado con `next/dynamic` + `SkeletonForm`
 - Botones de limpiar y registrar
 
-### Listado de Solicitudes — SSR
+### Listado de Solicitudes — SSR + Lazy Loading + Skeleton 3s
 - **Datos pre-renderizados desde el servidor** (tabla lista en el HTML inicial)
+- **Espera simulada de 3 segundos** con componente `SkeletonTable`
+- Componente `TravelRequestList` cargado con `next/dynamic`
 - Tabla con todas las columnas: ID, DNI, nombre, origen, destino, tipo, pasajero, salida, regreso, registro, estado
 - **Sanitización XSS** con DOMPurify al mostrar datos en la tabla
 - Filtro por estado con selector desplegable
+- **Cambio de estado** directamente desde la tabla (selector inline por solicitud)
 - Contador de resultados filtrados
-- Badges de color por estado
-- Botón de eliminar por solicitud
+- Botón de eliminar por solicitud (seleccionable)
 - Diseño responsive con scroll horizontal en pantallas pequeñas
+
+### Portal del Cliente — Lazy Loading + Skeleton
+- Página `/cliente` con búsqueda por DNI o email
+- Los clientes solo pueden visualizar sus propias solicitudes (solo lectura)
+- Validación del formato de DNI y email antes de buscar
+- Espera simulada de 3 segundos con Skeleton durante la búsqueda
+- Tarjetas con detalle completo de cada solicitud encontrada
 
 ### Seguridad y Sanitización
 - Middleware XSS global en backend (librería `xss`)

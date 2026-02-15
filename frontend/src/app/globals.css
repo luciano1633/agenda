@@ -468,6 +468,46 @@ body {
   color: #155724;
 }
 
+/* ===== SELECT DE ESTADO EN TABLA ===== */
+.status-select {
+  padding: 0.25rem 0.4rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  appearance: auto;
+}
+
+.status-select.pendiente {
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffc107;
+}
+
+.status-select.en-proceso {
+  background: #cce5ff;
+  color: #004085;
+  border-color: #80bdff;
+}
+
+.status-select.finalizada {
+  background: #d4edda;
+  color: #155724;
+  border-color: #81c784;
+}
+
+.status-select:hover {
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.status-select:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
 /* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
@@ -610,4 +650,246 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+
+/* ===== SKELETON COMPONENTS ===== */
+/* Animación pulse para efecto de carga */
+@keyframes skeletonPulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s ease-in-out infinite, skeletonShimmer 2s linear infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  position: relative;
+}
+
+/* Skeleton icon y title */
+.skeleton-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.skeleton-title {
+  width: 220px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+/* Skeleton tabla */
+.skeleton-th {
+  height: 14px;
+  width: 70%;
+  border-radius: 3px;
+}
+
+.skeleton-td {
+  height: 12px;
+  min-width: 30px;
+  border-radius: 3px;
+}
+
+.skeleton-table thead th {
+  padding: 0.75rem 0.6rem;
+}
+
+.skeleton-table tbody td {
+  padding: 0.85rem 0.6rem;
+}
+
+/* Skeleton filtros */
+.skeleton-filter-label {
+  width: 130px;
+  height: 16px;
+}
+
+.skeleton-filter-select {
+  width: 160px;
+  height: 36px;
+  border-radius: var(--radius);
+}
+
+.skeleton-filter-count {
+  width: 180px;
+  height: 14px;
+  margin-left: auto;
+}
+
+/* Skeleton formulario */
+.skeleton-label {
+  width: 140px;
+  height: 14px;
+}
+
+.skeleton-input {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+.skeleton-input-box {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+.skeleton-radio-group {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.skeleton-radio {
+  width: 120px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.skeleton-btn {
+  width: 120px;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+.skeleton-btn-lg {
+  width: 180px;
+  height: 40px;
+  border-radius: var(--radius);
+}
+
+/* Skeleton dashboard stats */
+.skeleton-stat-card {
+  min-height: 80px;
+}
+
+.skeleton-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.skeleton-stat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-stat-label {
+  width: 100px;
+  height: 12px;
+}
+
+.skeleton-stat-number {
+  width: 60px;
+  height: 28px;
+}
+
+/* Skeleton loading text */
+.skeleton-loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: var(--gray-500);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.skeleton-dashboard-wrapper {
+  width: 100%;
+}
+
+/* ===== VISTA CLIENTE ===== */
+.client-request-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.client-request-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.client-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.client-card-header strong {
+  font-size: 1.05rem;
+  color: var(--primary-dark);
+}
+
+.client-card-body {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.client-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.client-card-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.client-card-row span:last-child {
+  font-size: 0.9rem;
+  color: var(--gray-900);
+}
+
+/* Skeleton client rows */
+.skeleton-client-card {
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  min-height: 120px;
+}
+
+.skeleton-client-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-client-loading {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .client-card-body {
+    grid-template-columns: 1fr;
+  }
 }

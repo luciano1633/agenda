@@ -60,6 +60,25 @@ export const searchClients = async (query) => {
 };
 
 /**
+ * Actualiza una solicitud existente (parcial o total)
+ */
+export const updateRequest = async (id, updateData) => {
+  const res = await fetch(`${API_BASE_URL}/travel-requests/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updateData),
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    const errorMsg = data.errors ? data.errors.join(', ') : data.message;
+    throw new Error(errorMsg);
+  }
+  return data.data;
+};
+
+/**
  * Elimina una solicitud por ID
  */
 export const deleteRequest = async (id) => {

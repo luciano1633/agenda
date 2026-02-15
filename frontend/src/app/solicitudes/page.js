@@ -1,23 +1,41 @@
 /**
  * Página de Listado de Solicitudes - Server Component (SSR)
  * La carga inicial de datos se hace en el servidor.
- * Los datos pre-renderizados se pasan al componente interactivo del cliente.
+ * El componente TravelRequestList se carga de forma diferida con next/dynamic.
+ * Incluye un Skeleton como retroalimentación visual con espera simulada de 3 segundos.
  */
 import Navbar from '@/components/Navbar';
-import TravelRequestList from '@/components/TravelRequestList';
+import dynamic from 'next/dynamic';
+import SkeletonTable from '@/components/skeletons/SkeletonTable';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
+ * Carga diferida del componente TravelRequestList con next/dynamic.
+ * Muestra un SkeletonTable como retroalimentación visual mientras se carga.
+ */
+const TravelRequestList = dynamic(
+  () => import('@/components/TravelRequestList'),
+  {
+    ssr: false,
+    loading: () => <SkeletonTable />,
+  }
+);
+
+/**
  * Función que se ejecuta en el SERVIDOR para obtener las solicitudes.
- * El HTML se genera con estos datos antes de enviarlo al navegador.
+ * Incluye espera simulada de 3 segundos para demostrar carga diferida con Skeleton.
  */
 async function fetchInitialRequests() {
   try {
     const res = await fetch(`${API_BASE_URL}/travel-requests`, {
-      cache: 'no-store', // Sin cache para datos frescos en cada request
+      cache: 'no-store',
     });
     const data = await res.json();
+
+    // Espera simulada de 3 segundos para demostración de Skeleton
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     if (!data.success) return [];
     return data.data;
   } catch (err) {
@@ -32,7 +50,6 @@ async function fetchInitialRequests() {
  * que el usuario pueda filtrar y eliminar interactivamente.
  */
 export default async function SolicitudesPage() {
-  // Fetch ejecutado en el SERVIDOR (SSR)
   const initialRequests = await fetchInitialRequests();
 
   return (
@@ -42,7 +59,7 @@ export default async function SolicitudesPage() {
         <div className="page-header">
           <h2>📋 Listado de Solicitudes</h2>
           <p>Consulte y filtre todas las solicitudes de viaje registradas</p>
-          <small className="ssr-badge">🖥️ Datos cargados desde el servidor (SSR)</small>
+          <small className="ssr-badge">🖥️ Datos cargados desde el servidor (SSR) con espera simulada de 3s</small>
         </div>
         <TravelRequestList initialData={initialRequests} />
       </main>

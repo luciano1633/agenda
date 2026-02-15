@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllRequests, deleteRequest } from '@/services/api';
+import { getAllRequests, deleteRequest, updateRequest } from '@/services/api';
 import DOMPurify from 'isomorphic-dompurify';
 
 /**
@@ -24,6 +24,7 @@ export default function TravelRequestList({ initialData = [] }) {
   const [statusFilter, setStatusFilter] = useState('todas');
   // Si hay datos iniciales del SSR, no mostrar loading
   const [loading, setLoading] = useState(initialData.length === 0);
+  const [showSkeleton, setShowSkeleton] = useState(initialData.length === 0);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -31,6 +32,13 @@ export default function TravelRequestList({ initialData = [] }) {
     // Solo hacer fetch del cliente si no hay datos del SSR
     if (initialData.length === 0) {
       fetchRequests();
+    } else {
+      // Simular espera de 3 segundos con Skeleton para datos del SSR
+      setShowSkeleton(true);
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -40,14 +48,18 @@ export default function TravelRequestList({ initialData = [] }) {
 
   const fetchRequests = async () => {
     setLoading(true);
+    setShowSkeleton(true);
     setError('');
     try {
       const data = await getAllRequests();
+      // Espera simulada de 3 segundos para demostrar Skeleton
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setRequests(data);
     } catch (err) {
       setError('Error al cargar las solicitudes: ' + err.message);
     } finally {
       setLoading(false);
+      setShowSkeleton(false);
     }
   };
 
@@ -65,10 +77,26 @@ export default function TravelRequestList({ initialData = [] }) {
     try {
       await deleteRequest(id);
       setSuccessMsg(`Solicitud #${id} eliminada exitosamente`);
-      fetchRequests();
+      // Actualizar lista sin skeleton (actualización rápida)
+      const data = await getAllRequests();
+      setRequests(data);
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       setError('Error al eliminar: ' + err.message);
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await updateRequest(id, { status: newStatus });
+      setSuccessMsg(`Estado de solicitud #${id} actualizado a "${newStatus}"`);
+      // Actualizar la lista localmente sin recargar
+      setRequests(prev => prev.map(req =>
+        req.id === id ? { ...req, status: newStatus } : req
+      ));
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setError('Error al actualizar estado: ' + err.message);
     }
   };
 
@@ -103,11 +131,42 @@ export default function TravelRequestList({ initialData = [] }) {
     return map[type] || type;
   };
 
-  if (loading) {
+  if (loading || showSkeleton) {
     return (
-      <div className="card">
-        <div className="loading">
-          <span className="spinner"></span> Cargando solicitudes...
+      <div className="card skeleton-card">
+        <div className="card-header">
+          <div className="skeleton-icon skeleton-pulse"></div>
+          <div className="skeleton-title skeleton-pulse"></div>
+        </div>
+        <div className="filter-bar">
+          <div className="skeleton-filter-label skeleton-pulse"></div>
+          <div className="skeleton-filter-select skeleton-pulse"></div>
+          <div className="skeleton-filter-count skeleton-pulse"></div>
+        </div>
+        <div className="table-container">
+          <table className="data-table skeleton-table">
+            <thead>
+              <tr>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <th key={i}><div className="skeleton-th skeleton-pulse"></div></th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, rowIdx) => (
+                <tr key={rowIdx}>
+                  {Array.from({ length: 12 }).map((_, colIdx) => (
+                    <td key={colIdx}>
+                      <div className="skeleton-td skeleton-pulse" style={{ width: colIdx === 0 ? '50px' : colIdx === 11 ? '40px' : '80%' }}></div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="skeleton-loading-text">
+          <span className="spinner"></span> Cargando solicitudes de viaje... (espera simulada 3s)
         </div>
       </div>
     );
@@ -180,9 +239,15 @@ export default function TravelRequestList({ initialData = [] }) {
                   <td>{formatDateTime(req.returnDateTime)}</td>
                   <td>{formatDateTime(req.registrationDateTime)}</td>
                   <td>
-                    <span className={`status-badge ${getStatusClass(req.status)}`}>
-                      {req.status}
-                    </span>
+                    <select
+                      className={`status-select ${getStatusClass(req.status)}`}
+                      value={req.status}
+                      onChange={(e) => handleStatusChange(req.id, e.target.value)}
+                    >
+                      <option value="pendiente">🟡 Pendiente</option>
+                      <option value="en proceso">🔵 En Proceso</option>
+                      <option value="finalizada">🟢 Finalizada</option>
+                    </select>
                   </td>
                   <td>
                     <button
