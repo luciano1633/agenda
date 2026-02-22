@@ -80,6 +80,12 @@ body {
   letter-spacing: -0.3px;
 }
 
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .navbar-nav {
   display: flex;
   gap: 0.5rem;
@@ -100,6 +106,52 @@ body {
 .navbar-nav a.active {
   color: var(--white);
   background: rgba(255,255,255,0.15);
+}
+
+/* ===== SELECTOR DE IDIOMA (i18n) ===== */
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(255,255,255,0.25);
+}
+
+.language-label {
+  font-size: 1.1rem;
+}
+
+.language-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.lang-btn {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lang-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: var(--white);
+}
+
+.lang-btn.active {
+  background: rgba(255,255,255,0.25);
+  color: var(--white);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
 }
 
 /* ===== CONTENIDO PRINCIPAL ===== */
@@ -617,6 +669,26 @@ body {
     height: auto;
     padding: 0.75rem 0;
     gap: 0.5rem;
+  }
+
+  .navbar-right {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: center;
+  }
+
+  .navbar-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .language-switcher {
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+    padding-top: 0.25rem;
+    border-top: 1px solid rgba(255,255,255,0.15);
   }
 
   .radio-group {

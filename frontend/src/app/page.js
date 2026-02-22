@@ -7,6 +7,7 @@
 import Navbar from '@/components/Navbar';
 import dynamic from 'next/dynamic';
 import SkeletonDashboard from '@/components/skeletons/SkeletonDashboard';
+import HomeContent from '@/components/HomeContent';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -61,11 +62,7 @@ export default async function HomePage() {
     <div className="app-container">
       <Navbar />
       <main className="main-content">
-        <div className="page-header">
-          <h2>✈️ Panel de Control</h2>
-          <p>Bienvenido al sistema de gestión de solicitudes de viaje</p>
-          <small className="ssr-badge">🖥️ Página renderizada desde el servidor (SSR)</small>
-        </div>
+        <HomeContent />
         <DashboardContent stats={stats} />
       </main>
     </div>

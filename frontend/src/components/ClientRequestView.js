@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -14,10 +15,12 @@ const sanitize = (value) => {
 };
 
 /**
- * Componente de vista de cliente.
+ * Componente de vista de cliente internacionalizado.
  * Los clientes solo pueden visualizar las solicitudes asociadas a su DNI o email.
  */
 export default function ClientRequestView() {
+  const { t, i18n } = useTranslation();
+
   const [searchValue, setSearchValue] = useState('');
   const [searchType, setSearchType] = useState('dni');
   const [requests, setRequests] = useState([]);
@@ -27,20 +30,20 @@ export default function ClientRequestView() {
 
   const validateSearch = () => {
     if (!searchValue.trim()) {
-      setError('Ingrese un valor de búsqueda');
+      setError(t('validation.searchValueRequired'));
       return false;
     }
 
     if (searchType === 'dni') {
       const rutRegex = /^\d{7,8}-[\dkK]$/;
       if (!rutRegex.test(searchValue.trim())) {
-        setError('Formato de DNI inválido. Use el formato: XXXXXXXX-X (Ej: 16414595-0)');
+        setError(t('validation.dniFormatInvalid'));
         return false;
       }
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(searchValue.trim())) {
-        setError('Formato de email inválido');
+        setError(t('validation.emailFormatInvalid'));
         return false;
       }
     }
@@ -62,7 +65,6 @@ export default function ClientRequestView() {
 
       if (!data.success) throw new Error(data.message);
 
-      // Simular espera de 3 segundos para carga diferida
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       const filtered = data.data.filter((req) => {
@@ -76,16 +78,20 @@ export default function ClientRequestView() {
       setRequests(filtered);
       setSearched(true);
     } catch (err) {
-      setError('Error al buscar solicitudes: ' + err.message);
+      setError(t('client.searchError') + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Formatea fecha/hora adaptándose al locale del idioma actual.
+   */
   const formatDateTime = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return date.toLocaleString('es-CL', {
+    const locale = i18n.language === 'en' ? 'en-US' : 'es-CL';
+    return date.toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -106,9 +112,9 @@ export default function ClientRequestView() {
 
   const getTripTypeLabel = (type) => {
     const map = {
-      'negocios': '💼 Negocios',
-      'turismo': '🏖️ Turismo',
-      'otros': '📌 Otros',
+      'negocios': `💼 ${t('list.tripBusiness')}`,
+      'turismo': `🏖️ ${t('list.tripTourism')}`,
+      'otros': `📌 ${t('list.tripOther')}`,
     };
     return map[type] || type;
   };
@@ -117,11 +123,11 @@ export default function ClientRequestView() {
     <div className="card">
       <div className="card-header">
         <span>🔍</span>
-        <h3>Consulta de Solicitudes - Vista Cliente</h3>
+        <h3>{t('client.searchTitle')}</h3>
       </div>
 
       <p style={{ marginBottom: '1rem', color: 'var(--gray-700)', fontSize: '0.9rem' }}>
-        Ingrese su DNI o email para consultar sus solicitudes de viaje asociadas.
+        {t('client.searchDescription')}
       </p>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -129,7 +135,7 @@ export default function ClientRequestView() {
       <form onSubmit={handleSearch} style={{ marginBottom: '1.5rem' }}>
         <div className="form-grid">
           <div className="form-group">
-            <label>Buscar por:</label>
+            <label>{t('client.searchBy')}</label>
             <select
               value={searchType}
               onChange={(e) => {
@@ -138,14 +144,14 @@ export default function ClientRequestView() {
                 setError('');
               }}
             >
-              <option value="dni">DNI / RUT</option>
-              <option value="email">Email</option>
+              <option value="dni">{t('client.searchByDni')}</option>
+              <option value="email">{t('client.searchByEmail')}</option>
             </select>
           </div>
 
           <div className="form-group">
             <label>
-              {searchType === 'dni' ? 'DNI / Identificación' : 'Email'} <span className="required">*</span>
+              {searchType === 'dni' ? t('client.dniLabel') : t('client.emailLabel')} <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -154,7 +160,7 @@ export default function ClientRequestView() {
                 setSearchValue(e.target.value);
                 if (error) setError('');
               }}
-              placeholder={searchType === 'dni' ? 'Ej: 16414595-0' : 'Ej: cliente@correo.com'}
+              placeholder={searchType === 'dni' ? t('client.dniPlaceholder') : t('client.emailPlaceholder')}
             />
           </div>
         </div>
@@ -163,10 +169,10 @@ export default function ClientRequestView() {
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? (
               <>
-                <span className="spinner"></span> Buscando...
+                <span className="spinner"></span> {t('client.searching')}
               </>
             ) : (
-              '🔍 Consultar Solicitudes'
+              `🔍 ${t('client.searchButton')}`
             )}
           </button>
         </div>
@@ -186,7 +192,7 @@ export default function ClientRequestView() {
             </div>
           ))}
           <div className="skeleton-loading-text">
-            <span className="spinner"></span> Cargando solicitudes del cliente...
+            <span className="spinner"></span> {t('client.loadingClient')}
           </div>
         </div>
       )}
@@ -197,57 +203,57 @@ export default function ClientRequestView() {
           {requests.length === 0 ? (
             <div className="empty-state">
               <div className="icon">📭</div>
-              <p>No se encontraron solicitudes asociadas a {searchType === 'dni' ? 'este DNI' : 'este email'}.</p>
+              <p>{searchType === 'dni' ? t('client.noResultsDni') : t('client.noResultsEmail')}</p>
             </div>
           ) : (
             <>
               <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
-                Se encontraron {requests.length} solicitud(es) asociada(s)
+                {t('client.resultsFound', { count: requests.length })}
               </div>
 
               {requests.map((req) => (
                 <div key={req.id} className="client-request-card">
                   <div className="client-card-header">
-                    <strong>Solicitud #{req.id}</strong>
+                    <strong>{t('client.requestNumber', { id: req.id })}</strong>
                     <span className={`status-badge ${getStatusClass(req.status)}`}>
                       {req.status}
                     </span>
                   </div>
                   <div className="client-card-body">
                     <div className="client-card-row">
-                      <span className="client-card-label">Cliente:</span>
+                      <span className="client-card-label">{t('client.labelClient')}:</span>
                       <span>{sanitize(req.clientName)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">DNI:</span>
+                      <span className="client-card-label">{t('client.labelDni')}:</span>
                       <span>{sanitize(req.clientDni)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Origen:</span>
+                      <span className="client-card-label">{t('client.labelOrigin')}:</span>
                       <span>{sanitize(req.origin)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Destino:</span>
+                      <span className="client-card-label">{t('client.labelDestination')}:</span>
                       <span>{sanitize(req.destination)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Tipo de viaje:</span>
+                      <span className="client-card-label">{t('client.labelTripType')}:</span>
                       <span>{getTripTypeLabel(req.tripType)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Pasajero:</span>
+                      <span className="client-card-label">{t('client.labelPassenger')}:</span>
                       <span>{sanitize(req.passengerName)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Salida:</span>
+                      <span className="client-card-label">{t('client.labelDeparture')}:</span>
                       <span>{formatDateTime(req.departureDateTime)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Regreso:</span>
+                      <span className="client-card-label">{t('client.labelReturn')}:</span>
                       <span>{formatDateTime(req.returnDateTime)}</span>
                     </div>
                     <div className="client-card-row">
-                      <span className="client-card-label">Registro:</span>
+                      <span className="client-card-label">{t('client.labelRegistration')}:</span>
                       <span>{formatDateTime(req.registrationDateTime)}</span>
                     </div>
                   </div>

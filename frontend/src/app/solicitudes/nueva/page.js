@@ -7,6 +7,7 @@
 import Navbar from '@/components/Navbar';
 import dynamic from 'next/dynamic';
 import SkeletonForm from '@/components/skeletons/SkeletonForm';
+import NewRequestPageHeader from '@/components/NewRequestPageHeader';
 
 /**
  * Carga diferida del formulario con next/dynamic.
@@ -30,11 +31,7 @@ export default function NuevaSolicitudPage() {
     <div className="app-container">
       <Navbar />
       <main className="main-content">
-        <div className="page-header">
-          <h2>➕ Nueva Solicitud de Viaje</h2>
-          <p>Complete el formulario para registrar una nueva solicitud</p>
-          <small className="ssr-badge">🖥️ Layout renderizado desde el servidor (SSR)</small>
-        </div>
+        <NewRequestPageHeader />
         <TravelRequestForm />
       </main>
     </div>

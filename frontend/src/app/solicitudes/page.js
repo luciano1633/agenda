@@ -7,6 +7,7 @@
 import Navbar from '@/components/Navbar';
 import dynamic from 'next/dynamic';
 import SkeletonTable from '@/components/skeletons/SkeletonTable';
+import ListPageHeader from '@/components/ListPageHeader';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -56,11 +57,7 @@ export default async function SolicitudesPage() {
     <div className="app-container">
       <Navbar />
       <main className="main-content">
-        <div className="page-header">
-          <h2>📋 Listado de Solicitudes</h2>
-          <p>Consulte y filtre todas las solicitudes de viaje registradas</p>
-          <small className="ssr-badge">🖥️ Datos cargados desde el servidor (SSR) con espera simulada de 3s</small>
-        </div>
+        <ListPageHeader />
         <TravelRequestList initialData={initialRequests} />
       </main>
     </div>

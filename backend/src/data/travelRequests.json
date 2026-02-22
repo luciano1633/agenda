@@ -27,7 +27,21 @@
       "registrationDateTime": "2026-02-08T21:44:03.545Z",
       "status": "en proceso",
       "email": "fgamboa@mail.com"
+    },
+    {
+      "id": 1006,
+      "clientDni": "17234768-1",
+      "clientName": "fernanda rivera",
+      "origin": "santiago",
+      "destination": "italia",
+      "tripType": "turismo",
+      "passengerName": "Fernanda Quintana Rivera",
+      "departureDateTime": "2026-02-15T03:00",
+      "returnDateTime": "2026-02-25T22:00",
+      "registrationDateTime": "2026-02-15T04:45:15.283Z",
+      "status": "finalizada",
+      "email": "hola@hotmail.com"
     }
   ],
-  "nextId": 1006
+  "nextId": 1007
 }

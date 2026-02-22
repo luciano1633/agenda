@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { getAllRequests, deleteRequest, updateRequest } from '@/services/api';
 import DOMPurify from 'isomorphic-dompurify';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Sanitiza un string para prevenir ataques XSS antes de mostrarlo en la UI.
- * Usa DOMPurify para limpiar cualquier código HTML/JS malicioso.
  */
 const sanitize = (value) => {
   if (!value) return '-';
@@ -16,24 +16,23 @@ const sanitize = (value) => {
 /**
  * Client Component que recibe datos pre-renderizados del servidor (SSR)
  * a través de initialData, y permite interactividad (filtrar, eliminar).
+ * Internacionalizado con react-i18next.
  */
 export default function TravelRequestList({ initialData = [] }) {
-  // Usar los datos del servidor como estado inicial (hidratación SSR)
+  const { t, i18n } = useTranslation();
+
   const [requests, setRequests] = useState(initialData);
   const [filteredRequests, setFilteredRequests] = useState(initialData);
   const [statusFilter, setStatusFilter] = useState('todas');
-  // Si hay datos iniciales del SSR, no mostrar loading
   const [loading, setLoading] = useState(initialData.length === 0);
   const [showSkeleton, setShowSkeleton] = useState(initialData.length === 0);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    // Solo hacer fetch del cliente si no hay datos del SSR
     if (initialData.length === 0) {
       fetchRequests();
     } else {
-      // Simular espera de 3 segundos con Skeleton para datos del SSR
       setShowSkeleton(true);
       const timer = setTimeout(() => {
         setShowSkeleton(false);
@@ -52,11 +51,10 @@ export default function TravelRequestList({ initialData = [] }) {
     setError('');
     try {
       const data = await getAllRequests();
-      // Espera simulada de 3 segundos para demostrar Skeleton
       await new Promise(resolve => setTimeout(resolve, 3000));
       setRequests(data);
     } catch (err) {
-      setError('Error al cargar las solicitudes: ' + err.message);
+      setError(t('list.loadError') + err.message);
     } finally {
       setLoading(false);
       setShowSkeleton(false);
@@ -72,38 +70,40 @@ export default function TravelRequestList({ initialData = [] }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm(`¿Está seguro de eliminar la solicitud #${id}?`)) return;
+    if (!confirm(t('list.confirmDelete', { id }))) return;
 
     try {
       await deleteRequest(id);
-      setSuccessMsg(`Solicitud #${id} eliminada exitosamente`);
-      // Actualizar lista sin skeleton (actualización rápida)
+      setSuccessMsg(t('list.deleteSuccess', { id }));
       const data = await getAllRequests();
       setRequests(data);
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      setError('Error al eliminar: ' + err.message);
+      setError(t('list.deleteError') + err.message);
     }
   };
 
   const handleStatusChange = async (id, newStatus) => {
     try {
       await updateRequest(id, { status: newStatus });
-      setSuccessMsg(`Estado de solicitud #${id} actualizado a "${newStatus}"`);
-      // Actualizar la lista localmente sin recargar
+      setSuccessMsg(t('list.statusUpdateSuccess', { id, status: newStatus }));
       setRequests(prev => prev.map(req =>
         req.id === id ? { ...req, status: newStatus } : req
       ));
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      setError('Error al actualizar estado: ' + err.message);
+      setError(t('list.updateError') + err.message);
     }
   };
 
+  /**
+   * Formatea fecha/hora adaptándose al locale del idioma actual.
+   */
   const formatDateTime = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return date.toLocaleString('es-CL', {
+    const locale = i18n.language === 'en' ? 'en-US' : 'es-CL';
+    return date.toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -124,9 +124,9 @@ export default function TravelRequestList({ initialData = [] }) {
 
   const getTripTypeLabel = (type) => {
     const map = {
-      'negocios': '💼 Negocios',
-      'turismo': '🏖️ Turismo',
-      'otros': '📌 Otros',
+      'negocios': `💼 ${t('list.tripBusiness')}`,
+      'turismo': `🏖️ ${t('list.tripTourism')}`,
+      'otros': `📌 ${t('list.tripOther')}`,
     };
     return map[type] || type;
   };
@@ -166,7 +166,7 @@ export default function TravelRequestList({ initialData = [] }) {
           </table>
         </div>
         <div className="skeleton-loading-text">
-          <span className="spinner"></span> Cargando solicitudes de viaje... (espera simulada 3s)
+          <span className="spinner"></span> {t('list.loadingRequests')}
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ export default function TravelRequestList({ initialData = [] }) {
     <div className="card">
       <div className="card-header">
         <span>📋</span>
-        <h3>Solicitudes de Viaje Registradas</h3>
+        <h3>{t('list.tableTitle')}</h3>
       </div>
 
       {successMsg && <div className="alert alert-success">{successMsg}</div>}
@@ -184,19 +184,19 @@ export default function TravelRequestList({ initialData = [] }) {
 
       {/* Barra de filtros */}
       <div className="filter-bar">
-        <label htmlFor="filter-status">🔍 Filtrar por estado:</label>
+        <label htmlFor="filter-status">🔍 {t('list.filterByStatus')}</label>
         <select
           id="filter-status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="todas">Todas</option>
-          <option value="pendiente">🟡 Pendiente</option>
-          <option value="en proceso">🔵 En Proceso</option>
-          <option value="finalizada">🟢 Finalizada</option>
+          <option value="todas">{t('list.allStatuses')}</option>
+          <option value="pendiente">🟡 {t('list.pendingStatus')}</option>
+          <option value="en proceso">🔵 {t('list.inProgressStatus')}</option>
+          <option value="finalizada">🟢 {t('list.completedStatus')}</option>
         </select>
         <span className="filter-count">
-          Mostrando {filteredRequests.length} de {requests.length} solicitudes
+          {t('common.showing')} {filteredRequests.length} {t('common.of')} {requests.length} {t('common.requests')}
         </span>
       </div>
 
@@ -204,25 +204,29 @@ export default function TravelRequestList({ initialData = [] }) {
       {filteredRequests.length === 0 ? (
         <div className="empty-state">
           <div className="icon">📭</div>
-          <p>No se encontraron solicitudes{statusFilter !== 'todas' ? ` con estado "${statusFilter}"` : ''}.</p>
+          <p>
+            {statusFilter !== 'todas'
+              ? t('list.emptyStateFiltered', { status: statusFilter })
+              : t('list.emptyState')}
+          </p>
         </div>
       ) : (
         <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>DNI Cliente</th>
-                <th>Nombre Cliente</th>
-                <th>Origen</th>
-                <th>Destino</th>
-                <th>Tipo</th>
-                <th>Pasajero</th>
-                <th>Salida</th>
-                <th>Regreso</th>
-                <th>Registro</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>{t('list.columnId')}</th>
+                <th>{t('list.columnDni')}</th>
+                <th>{t('list.columnClientName')}</th>
+                <th>{t('list.columnOrigin')}</th>
+                <th>{t('list.columnDestination')}</th>
+                <th>{t('list.columnType')}</th>
+                <th>{t('list.columnPassenger')}</th>
+                <th>{t('list.columnDeparture')}</th>
+                <th>{t('list.columnReturn')}</th>
+                <th>{t('list.columnRegistration')}</th>
+                <th>{t('list.columnStatus')}</th>
+                <th>{t('list.columnActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -244,9 +248,9 @@ export default function TravelRequestList({ initialData = [] }) {
                       value={req.status}
                       onChange={(e) => handleStatusChange(req.id, e.target.value)}
                     >
-                      <option value="pendiente">🟡 Pendiente</option>
-                      <option value="en proceso">🔵 En Proceso</option>
-                      <option value="finalizada">🟢 Finalizada</option>
+                      <option value="pendiente">🟡 {t('list.pendingStatus')}</option>
+                      <option value="en proceso">🔵 {t('list.inProgressStatus')}</option>
+                      <option value="finalizada">🟢 {t('list.completedStatus')}</option>
                     </select>
                   </td>
                   <td>

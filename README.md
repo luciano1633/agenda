@@ -2,6 +2,37 @@
 
 Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend SSR) y **Node.js/Express** (backend API REST).
 
+## 🌐 Internacionalización (i18n) con react-i18next
+
+La aplicación implementa **internacionalización completa** usando `react-i18next`, permitiendo cambiar manualmente el idioma entre **español (es)** e **inglés (en)**:
+
+- **Selector de idioma manual** visible en la barra de navegación (botones 🇨🇱 ES / 🇺🇸 EN).
+- **Persistencia del idioma** seleccionado en `localStorage` (se recuerda entre sesiones).
+- **Detección automática** del idioma del navegador como valor inicial (`i18next-browser-languagedetector`).
+- **Todos los textos de la interfaz** están traducidos: etiquetas, placeholders, botones, encabezados, mensajes de error y validación.
+- **Mensajes de validación localizados**: por ejemplo, `"Este campo es obligatorio"` / `"This field is required"`.
+- **Formato de fechas regional**: se adapta al locale del idioma (`es-CL` para español, `en-US` para inglés).
+- **Formato de hora regional**: las fechas de registro, salida y regreso se muestran en el formato correspondiente al país.
+
+| Idioma | Código | Archivo de traducciones | Formato de fecha |
+|--------|--------|------------------------|-----------------|
+| Español | `es` | `src/i18n/locales/es.json` | DD/MM/YYYY (es-CL) |
+| Inglés | `en` | `src/i18n/locales/en.json` | MM/DD/YYYY (en-US) |
+
+### Arquitectura i18n
+
+```
+frontend/src/i18n/
+├── i18n.js                  # Configuración de i18next (fallback, detección, cache)
+└── locales/
+    ├── es.json              # Traducciones en español
+    └── en.json              # Traducciones en inglés
+```
+
+- `I18nProvider` envuelve toda la aplicación desde `layout.js`.
+- Los Server Components usan componentes wrapper de tipo Client (`HomeContent`, `ListPageHeader`, etc.) para acceder a las traducciones.
+- El `LanguageSwitcher` en el Navbar permite cambiar el idioma en cualquier momento.
+
 ## 🖥️ Renderizado desde el Servidor (SSR)
 
 Esta aplicación implementa **Server-Side Rendering (SSR)** con Next.js App Router:
@@ -69,8 +100,11 @@ Se implementa protección contra ataques Cross-Site Scripting (XSS) en ambas cap
 - Formato de email (`usuario@dominio.ext`)
 - Formato de DNI/RUT chileno (`XXXXXXXX-X`)
 - Fecha de regreso posterior a la de salida
+- Fechas de salida y regreso no pueden ser en el pasado
 - Tipos de viaje y estados válidos
 - Nombre del cliente con mínimo 3 caracteres
+- **Mensajes de validación internacionalizados** (español e inglés) usando `react-i18next`
+- Validación del formato de búsqueda en el portal del cliente (DNI y email)
 
 ### Persistencia de Datos
 - Almacenamiento simulado (mock) mediante archivo JSON local (`travelRequests.json`)
@@ -187,16 +221,27 @@ npm run dev
 │   │   │       └── nueva/
 │   │   │           └── page.js            # Formulario con carga diferida + Skeleton
 │   │   ├── components/
-│   │   │   ├── ClientRequestView.js       # Vista de consulta para clientes
-│   │   │   ├── DashboardContent.js        # Contenido del dashboard (lazy loaded)
-│   │   │   ├── Navbar.js                  # Barra de navegación
-│   │   │   ├── TravelRequestForm.js       # Formulario de solicitud de viaje
-│   │   │   ├── TravelRequestList.js       # Tabla de solicitudes con filtro y cambio de estado
+│   │   │   ├── ClientPageHeader.js         # Encabezado i18n para portal del cliente
+│   │   │   ├── ClientRequestView.js       # Vista de consulta para clientes (i18n)
+│   │   │   ├── DashboardContent.js        # Contenido del dashboard (lazy loaded + i18n)
+│   │   │   ├── HomeContent.js             # Encabezado i18n para página principal
+│   │   │   ├── I18nProvider.js            # Proveedor de contexto i18next
+│   │   │   ├── LanguageSwitcher.js        # Selector manual de idioma (ES/EN)
+│   │   │   ├── ListPageHeader.js          # Encabezado i18n para listado
+│   │   │   ├── Navbar.js                  # Barra de navegación (i18n + selector idioma)
+│   │   │   ├── NewRequestPageHeader.js    # Encabezado i18n para nueva solicitud
+│   │   │   ├── TravelRequestForm.js       # Formulario de solicitud (i18n + validaciones)
+│   │   │   ├── TravelRequestList.js       # Tabla de solicitudes (i18n + filtros)
 │   │   │   └── skeletons/                 # Componentes Skeleton (retroalimentación visual)
 │   │   │       ├── SkeletonClientView.js  # Skeleton para vista cliente
 │   │   │       ├── SkeletonDashboard.js   # Skeleton para dashboard
 │   │   │       ├── SkeletonForm.js        # Skeleton para formulario
 │   │   │       └── SkeletonTable.js       # Skeleton para tabla de solicitudes
+│   │   ├── i18n/                          # Internacionalización (react-i18next)
+│   │   │   ├── i18n.js                    # Configuración de i18next
+│   │   │   └── locales/
+│   │   │       ├── es.json                # Traducciones en español
+│   │   │       └── en.json                # Traducciones en inglés
 │   │   └── services/
 │   │       └── api.js                     # Servicio de conexión con la API (CRUD completo)
 │   ├── next.config.js
@@ -212,6 +257,8 @@ npm run dev
 - **Next.js 14** (App Router con Server Components para SSR)
 - **React 18** (Server Components + Client Components con `'use client'`)
 - **next/dynamic** (carga diferida / lazy loading de componentes)
+- **react-i18next** + **i18next** (internacionalización ES/EN con cambio manual)
+- **i18next-browser-languagedetector** (detección automática del idioma del navegador)
 - **isomorphic-dompurify** (sanitización XSS compatible con SSR)
 - **CSS3** (diseño responsivo, grid, flexbox, animaciones Skeleton)
 
@@ -263,6 +310,16 @@ npm run dev
 - Validación del formato de DNI y email antes de buscar
 - Espera simulada de 3 segundos con Skeleton durante la búsqueda
 - Tarjetas con detalle completo de cada solicitud encontrada
+
+### Internacionalización (i18n)
+- Soporte completo para **español** e **inglés** con `react-i18next`
+- Selector de idioma manual en la barra de navegación (🇨🇱 ES / 🇺🇸 EN)
+- Persistencia del idioma seleccionado en `localStorage`
+- Detección del idioma preferido del navegador como valor inicial
+- Todos los formularios, validaciones, etiquetas, placeholders y mensajes traducidos
+- Formato de fechas adaptado al locale del idioma seleccionado (`es-CL` / `en-US`)
+- Componentes wrapper (`HomeContent`, `ListPageHeader`, etc.) para integrar traducciones en Server Components
+- `I18nProvider` envuelve la aplicación desde `layout.js`
 
 ### Seguridad y Sanitización
 - Middleware XSS global en backend (librería `xss`)

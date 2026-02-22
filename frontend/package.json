@@ -9,10 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "i18next": "^25.8.13",
+    "i18next-browser-languagedetector": "^8.2.1",
     "isomorphic-dompurify": "^3.0.0-rc.2",
     "next": "^14.2.21",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-i18next": "^16.5.4"
   },
   "devDependencies": {
     "eslint": "^8.57.0",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getNextId, createRequest, searchClients } from '@/services/api';
 import DOMPurify from 'isomorphic-dompurify';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Sanitiza un valor de entrada para prevenir ataques XSS.
@@ -13,6 +14,8 @@ const sanitizeInput = (value) => {
 };
 
 export default function TravelRequestForm() {
+  const { t, i18n } = useTranslation();
+
   // Estado del formulario
   const [formData, setFormData] = useState({
     clientDni: '',
@@ -48,6 +51,11 @@ export default function TravelRequestForm() {
     return () => clearInterval(interval);
   }, []);
 
+  // Actualizar formato de fecha cuando cambia el idioma
+  useEffect(() => {
+    updateRegistrationDateTime();
+  }, [i18n.language]);
+
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -68,9 +76,14 @@ export default function TravelRequestForm() {
     }
   };
 
+  /**
+   * Actualiza la fecha/hora de registro usando el locale actual de i18n.
+   * Se adapta automáticamente al idioma seleccionado (formato regional).
+   */
   const updateRegistrationDateTime = () => {
     const now = new Date();
-    const formatted = now.toLocaleString('es-CL', {
+    const locale = i18n.language === 'en' ? 'en-US' : 'es-CL';
+    const formatted = now.toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -114,78 +127,80 @@ export default function TravelRequestForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Limpiar error del campo al modificarlo
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Validaciones
+  /**
+   * Validaciones del formulario con mensajes internacionalizados.
+   * Incluye validaciones de campos vacíos, formato y lógica de fechas.
+   */
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.clientDni.trim()) {
-      newErrors.clientDni = 'El DNI del cliente es requerido';
+      newErrors.clientDni = t('validation.dniRequired');
     } else if (!/^\d{7,8}-[\dkK]$/.test(formData.clientDni.trim())) {
-      newErrors.clientDni = 'Formato inválido. Ej: 16414595-0';
+      newErrors.clientDni = t('validation.dniInvalid');
     }
 
     if (!formData.clientName.trim()) {
-      newErrors.clientName = 'El nombre del cliente es requerido';
+      newErrors.clientName = t('validation.clientNameRequired');
     } else if (formData.clientName.trim().length < 3) {
-      newErrors.clientName = 'El nombre debe tener al menos 3 caracteres';
+      newErrors.clientName = t('validation.clientNameMin');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
+      newErrors.email = t('validation.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'El formato del email no es válido';
+      newErrors.email = t('validation.emailInvalid');
     }
 
     if (!formData.origin.trim()) {
-      newErrors.origin = 'El origen es requerido';
+      newErrors.origin = t('validation.originRequired');
     }
 
     if (!formData.destination.trim()) {
-      newErrors.destination = 'El destino es requerido';
+      newErrors.destination = t('validation.destinationRequired');
     }
 
     if (!formData.tripType) {
-      newErrors.tripType = 'Seleccione un tipo de viaje';
+      newErrors.tripType = t('validation.tripTypeRequired');
     }
 
     if (!formData.passengerName.trim()) {
-      newErrors.passengerName = 'El nombre del pasajero es requerido';
+      newErrors.passengerName = t('validation.passengerNameRequired');
     }
 
     if (!formData.departureDateTime) {
-      newErrors.departureDateTime = 'La fecha de salida es requerida';
+      newErrors.departureDateTime = t('validation.departureDateRequired');
     } else {
       const departure = new Date(formData.departureDateTime);
       const now = new Date();
       if (departure < now) {
-        newErrors.departureDateTime = 'La fecha de salida no puede ser en el pasado';
+        newErrors.departureDateTime = t('validation.departureDatePast');
       }
     }
 
     if (!formData.returnDateTime) {
-      newErrors.returnDateTime = 'La fecha de regreso es requerida';
+      newErrors.returnDateTime = t('validation.returnDateRequired');
     } else {
       const returnDate = new Date(formData.returnDateTime);
       const now = new Date();
       if (returnDate < now) {
-        newErrors.returnDateTime = 'La fecha de regreso no puede ser en el pasado';
+        newErrors.returnDateTime = t('validation.returnDatePast');
       }
     }
 
     if (formData.departureDateTime && formData.returnDateTime) {
       if (new Date(formData.returnDateTime) <= new Date(formData.departureDateTime)) {
-        newErrors.returnDateTime = 'La fecha de regreso debe ser posterior a la de salida';
+        newErrors.returnDateTime = t('validation.returnDateBeforeDeparture');
       }
     }
 
     if (!formData.status) {
-      newErrors.status = 'Seleccione un estado';
+      newErrors.status = t('validation.statusRequired');
     }
 
     setErrors(newErrors);
@@ -202,7 +217,6 @@ export default function TravelRequestForm() {
 
     setLoading(true);
     try {
-      // Sanitizar todos los campos antes de enviarlos al backend (prevención XSS)
       const sanitizedData = {
         ...formData,
         clientDni: sanitizeInput(formData.clientDni),
@@ -213,9 +227,8 @@ export default function TravelRequestForm() {
         passengerName: sanitizeInput(formData.passengerName),
       };
       const result = await createRequest(sanitizedData);
-      setSubmitSuccess(`✅ Solicitud #${result.id} creada exitosamente`);
+      setSubmitSuccess(`✅ ${t('form.successMessage', { id: result.id })}`);
 
-      // Resetear formulario
       setFormData({
         clientDni: '',
         clientName: '',
@@ -238,7 +251,6 @@ export default function TravelRequestForm() {
     }
   };
 
-  // Limpiar formulario
   const handleReset = () => {
     setFormData({
       clientDni: '',
@@ -262,7 +274,7 @@ export default function TravelRequestForm() {
     <div className="card">
       <div className="card-header">
         <span>📝</span>
-        <h3>Registro de Solicitud de Viaje</h3>
+        <h3>{t('form.title')}</h3>
       </div>
 
       {submitSuccess && <div className="alert alert-success">{submitSuccess}</div>}
@@ -272,31 +284,31 @@ export default function TravelRequestForm() {
         <div className="form-grid">
           {/* ID Automático */}
           <div className="form-group">
-            <label>Identificador de Solicitud</label>
+            <label>{t('form.requestId')}</label>
             <div className="auto-id-display">
-              🔢 {nextId !== null ? `#${nextId}` : 'Cargando...'}
+              🔢 {nextId !== null ? `#${nextId}` : t('common.loading')}
             </div>
           </div>
 
           {/* Fecha de Registro */}
           <div className="form-group">
-            <label>Fecha y Hora de Registro</label>
+            <label>{t('form.registrationDateTime')}</label>
             <div className="registration-datetime">
-              🕐 {registrationDateTime || 'Cargando...'}
+              🕐 {registrationDateTime || t('common.loading')}
             </div>
           </div>
 
           {/* DNI Cliente */}
           <div className="form-group">
             <label>
-              DNI / Identificación del Cliente <span className="required">*</span>
+              {t('form.clientDni')} <span className="required">*</span>
             </label>
             <input
               type="text"
               name="clientDni"
               value={formData.clientDni}
               onChange={handleChange}
-              placeholder="Ej: 16414595-0"
+              placeholder={t('form.clientDniPlaceholder')}
               className={errors.clientDni ? 'error' : ''}
             />
             {errors.clientDni && <span className="error-text">{errors.clientDni}</span>}
@@ -305,14 +317,14 @@ export default function TravelRequestForm() {
           {/* Nombre Cliente */}
           <div className="form-group">
             <label>
-              Nombre del Cliente <span className="required">*</span>
+              {t('form.clientName')} <span className="required">*</span>
             </label>
             <input
               type="text"
               name="clientName"
               value={formData.clientName}
               onChange={handleChange}
-              placeholder="Ej: Esteban Castro Paredes"
+              placeholder={t('form.clientNamePlaceholder')}
               className={errors.clientName ? 'error' : ''}
             />
             {errors.clientName && <span className="error-text">{errors.clientName}</span>}
@@ -321,14 +333,14 @@ export default function TravelRequestForm() {
           {/* Email */}
           <div className="form-group">
             <label>
-              Email del Cliente <span className="required">*</span>
+              {t('form.email')} <span className="required">*</span>
             </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Ej: cliente@correo.com"
+              placeholder={t('form.emailPlaceholder')}
               className={errors.email ? 'error' : ''}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
@@ -337,7 +349,7 @@ export default function TravelRequestForm() {
           {/* Tipo de Viaje */}
           <div className="form-group">
             <label>
-              Tipo de Viaje <span className="required">*</span>
+              {t('form.tripType')} <span className="required">*</span>
             </label>
             <select
               name="tripType"
@@ -345,10 +357,10 @@ export default function TravelRequestForm() {
               onChange={handleChange}
               className={errors.tripType ? 'error' : ''}
             >
-              <option value="">-- Seleccione tipo de viaje --</option>
-              <option value="negocios">Negocios</option>
-              <option value="turismo">Turismo</option>
-              <option value="otros">Otros</option>
+              <option value="">{t('form.tripTypeSelect')}</option>
+              <option value="negocios">{t('form.tripBusiness')}</option>
+              <option value="turismo">{t('form.tripTourism')}</option>
+              <option value="otros">{t('form.tripOther')}</option>
             </select>
             {errors.tripType && <span className="error-text">{errors.tripType}</span>}
           </div>
@@ -356,14 +368,14 @@ export default function TravelRequestForm() {
           {/* Origen */}
           <div className="form-group">
             <label>
-              Origen <span className="required">*</span>
+              {t('form.origin')} <span className="required">*</span>
             </label>
             <input
               type="text"
               name="origin"
               value={formData.origin}
               onChange={handleChange}
-              placeholder="Ej: Santiago, Chile"
+              placeholder={t('form.originPlaceholder')}
               className={errors.origin ? 'error' : ''}
             />
             {errors.origin && <span className="error-text">{errors.origin}</span>}
@@ -372,14 +384,14 @@ export default function TravelRequestForm() {
           {/* Destino */}
           <div className="form-group">
             <label>
-              Destino <span className="required">*</span>
+              {t('form.destination')} <span className="required">*</span>
             </label>
             <input
               type="text"
               name="destination"
               value={formData.destination}
               onChange={handleChange}
-              placeholder="Ej: Madrid, España"
+              placeholder={t('form.destinationPlaceholder')}
               className={errors.destination ? 'error' : ''}
             />
             {errors.destination && <span className="error-text">{errors.destination}</span>}
@@ -388,14 +400,14 @@ export default function TravelRequestForm() {
           {/* Nombre Pasajero (Búsqueda) */}
           <div className="form-group full-width" ref={searchRef}>
             <label>
-              Nombre del Pasajero <span className="required">*</span>
+              {t('form.passengerName')} <span className="required">*</span>
             </label>
             <div className="search-container">
               <input
                 type="text"
                 value={clientSearch}
                 onChange={(e) => handlePassengerSearch(e.target.value)}
-                placeholder="🔍 Buscar pasajero por nombre... Ej: Fabián Gamboa Martínez"
+                placeholder={`🔍 ${t('form.passengerSearchPlaceholder')}`}
                 className={errors.passengerName ? 'error' : ''}
               />
               {showClientDropdown && clientResults.length > 0 && (
@@ -419,7 +431,7 @@ export default function TravelRequestForm() {
           {/* Fecha Salida */}
           <div className="form-group">
             <label>
-              Fecha y Hora de Salida <span className="required">*</span>
+              {t('form.departureDateTime')} <span className="required">*</span>
             </label>
             <input
               type="datetime-local"
@@ -434,7 +446,7 @@ export default function TravelRequestForm() {
           {/* Fecha Regreso */}
           <div className="form-group">
             <label>
-              Fecha y Hora de Regreso <span className="required">*</span>
+              {t('form.returnDateTime')} <span className="required">*</span>
             </label>
             <input
               type="datetime-local"
@@ -449,7 +461,7 @@ export default function TravelRequestForm() {
           {/* Estado (Radio Buttons) */}
           <div className="form-group full-width">
             <label>
-              Estado de la Solicitud <span className="required">*</span>
+              {t('form.status')} <span className="required">*</span>
             </label>
             <div className="radio-group">
               <div className="radio-option">
@@ -461,7 +473,7 @@ export default function TravelRequestForm() {
                   checked={formData.status === 'pendiente'}
                   onChange={handleChange}
                 />
-                <label htmlFor="status-pendiente">🟡 Pendiente</label>
+                <label htmlFor="status-pendiente">🟡 {t('form.statusPending')}</label>
               </div>
               <div className="radio-option">
                 <input
@@ -472,7 +484,7 @@ export default function TravelRequestForm() {
                   checked={formData.status === 'en proceso'}
                   onChange={handleChange}
                 />
-                <label htmlFor="status-en-proceso">🔵 En Proceso</label>
+                <label htmlFor="status-en-proceso">🔵 {t('form.statusInProgress')}</label>
               </div>
               <div className="radio-option">
                 <input
@@ -483,7 +495,7 @@ export default function TravelRequestForm() {
                   checked={formData.status === 'finalizada'}
                   onChange={handleChange}
                 />
-                <label htmlFor="status-finalizada">🟢 Finalizada</label>
+                <label htmlFor="status-finalizada">🟢 {t('form.statusCompleted')}</label>
               </div>
             </div>
             {errors.status && <span className="error-text">{errors.status}</span>}
@@ -493,15 +505,15 @@ export default function TravelRequestForm() {
         {/* Botones */}
         <div className="form-actions">
           <button type="button" className="btn btn-secondary" onClick={handleReset}>
-            🗑️ Limpiar
+            🗑️ {t('form.clearForm')}
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? (
               <>
-                <span className="spinner"></span> Registrando...
+                <span className="spinner"></span> {t('form.submitting')}
               </>
             ) : (
-              '💾 Registrar Solicitud'
+              `💾 ${t('form.submitForm')}`
             )}
           </button>
         </div>

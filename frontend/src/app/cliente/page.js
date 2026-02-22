@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar';
 import dynamic from 'next/dynamic';
 import SkeletonClientView from '@/components/skeletons/SkeletonClientView';
+import ClientPageHeader from '@/components/ClientPageHeader';
 
 /**
  * Página SSR de consulta de solicitudes para clientes.
@@ -25,11 +26,7 @@ export default function ClientePage() {
     <div className="app-container">
       <Navbar />
       <main className="main-content">
-        <div className="page-header">
-          <h2>👤 Portal del Cliente</h2>
-          <p>Consulte el estado de sus solicitudes de viaje</p>
-          <small className="ssr-badge">🖥️ Layout renderizado desde el servidor (SSR)</small>
-        </div>
+        <ClientPageHeader />
         <ClientRequestView />
       </main>
     </div>
