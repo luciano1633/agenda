@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { getNextId, createRequest, searchClients } from '@/services/api';
 import DOMPurify from 'isomorphic-dompurify';
 import { useTranslation } from 'react-i18next';
@@ -13,26 +14,41 @@ const sanitizeInput = (value) => {
   return DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [] });
 };
 
+/**
+ * Formulario de registro de solicitud de viaje.
+ * Utiliza React Hook Form para manejo de estado, validaciones y envío del formulario.
+ * Las validaciones están internacionalizadas con react-i18next.
+ */
 export default function TravelRequestForm() {
   const { t, i18n } = useTranslation();
 
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    clientDni: '',
-    clientName: '',
-    origin: '',
-    destination: '',
-    tripType: '',
-    passengerName: '',
-    departureDateTime: '',
-    returnDateTime: '',
-    status: 'pendiente',
-    email: '',
+  // React Hook Form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+    getValues,
+  } = useForm({
+    defaultValues: {
+      clientDni: '',
+      clientName: '',
+      origin: '',
+      destination: '',
+      tripType: '',
+      passengerName: '',
+      departureDateTime: '',
+      returnDateTime: '',
+      status: 'pendiente',
+      email: '',
+    },
+    mode: 'onSubmit',
   });
 
   const [nextId, setNextId] = useState(null);
   const [registrationDateTime, setRegistrationDateTime] = useState('');
-  const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,6 +58,9 @@ export default function TravelRequestForm() {
   const [clientResults, setClientResults] = useState([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const searchRef = useRef(null);
+
+  // Observar campos para validaciones cruzadas
+  const departureDateTime = watch('departureDateTime');
 
   // Obtener el siguiente ID al cargar
   useEffect(() => {
@@ -98,7 +117,7 @@ export default function TravelRequestForm() {
   // Búsqueda de pasajeros
   const handlePassengerSearch = async (value) => {
     setClientSearch(value);
-    setFormData(prev => ({ ...prev, passengerName: value }));
+    setValue('passengerName', value, { shouldValidate: false });
 
     if (value.length >= 2) {
       try {
@@ -115,134 +134,35 @@ export default function TravelRequestForm() {
   };
 
   const selectClient = (client) => {
-    setFormData(prev => ({
-      ...prev,
-      passengerName: client.name,
-    }));
+    setValue('passengerName', client.name, { shouldValidate: true });
     setClientSearch(client.name);
     setShowClientDropdown(false);
   };
 
-  // Manejo de cambios
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
   /**
-   * Validaciones del formulario con mensajes internacionalizados.
-   * Incluye validaciones de campos vacíos, formato y lógica de fechas.
+   * Envío del formulario gestionado por React Hook Form.
+   * Solo se ejecuta si todas las validaciones pasan.
    */
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.clientDni.trim()) {
-      newErrors.clientDni = t('validation.dniRequired');
-    } else if (!/^\d{7,8}-[\dkK]$/.test(formData.clientDni.trim())) {
-      newErrors.clientDni = t('validation.dniInvalid');
-    }
-
-    if (!formData.clientName.trim()) {
-      newErrors.clientName = t('validation.clientNameRequired');
-    } else if (formData.clientName.trim().length < 3) {
-      newErrors.clientName = t('validation.clientNameMin');
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = t('validation.emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = t('validation.emailInvalid');
-    }
-
-    if (!formData.origin.trim()) {
-      newErrors.origin = t('validation.originRequired');
-    }
-
-    if (!formData.destination.trim()) {
-      newErrors.destination = t('validation.destinationRequired');
-    }
-
-    if (!formData.tripType) {
-      newErrors.tripType = t('validation.tripTypeRequired');
-    }
-
-    if (!formData.passengerName.trim()) {
-      newErrors.passengerName = t('validation.passengerNameRequired');
-    }
-
-    if (!formData.departureDateTime) {
-      newErrors.departureDateTime = t('validation.departureDateRequired');
-    } else {
-      const departure = new Date(formData.departureDateTime);
-      const now = new Date();
-      if (departure < now) {
-        newErrors.departureDateTime = t('validation.departureDatePast');
-      }
-    }
-
-    if (!formData.returnDateTime) {
-      newErrors.returnDateTime = t('validation.returnDateRequired');
-    } else {
-      const returnDate = new Date(formData.returnDateTime);
-      const now = new Date();
-      if (returnDate < now) {
-        newErrors.returnDateTime = t('validation.returnDatePast');
-      }
-    }
-
-    if (formData.departureDateTime && formData.returnDateTime) {
-      if (new Date(formData.returnDateTime) <= new Date(formData.departureDateTime)) {
-        newErrors.returnDateTime = t('validation.returnDateBeforeDeparture');
-      }
-    }
-
-    if (!formData.status) {
-      newErrors.status = t('validation.statusRequired');
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Enviar formulario
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setSubmitError('');
     setSubmitSuccess('');
-
-    if (!validateForm()) return;
-
     setLoading(true);
+
     try {
       const sanitizedData = {
-        ...formData,
-        clientDni: sanitizeInput(formData.clientDni),
-        clientName: sanitizeInput(formData.clientName),
-        email: sanitizeInput(formData.email),
-        origin: sanitizeInput(formData.origin),
-        destination: sanitizeInput(formData.destination),
-        passengerName: sanitizeInput(formData.passengerName),
+        ...data,
+        clientDni: sanitizeInput(data.clientDni),
+        clientName: sanitizeInput(data.clientName),
+        email: sanitizeInput(data.email),
+        origin: sanitizeInput(data.origin),
+        destination: sanitizeInput(data.destination),
+        passengerName: sanitizeInput(data.passengerName),
       };
       const result = await createRequest(sanitizedData);
       setSubmitSuccess(`✅ ${t('form.successMessage', { id: result.id })}`);
 
-      setFormData({
-        clientDni: '',
-        clientName: '',
-        origin: '',
-        destination: '',
-        tripType: '',
-        passengerName: '',
-        departureDateTime: '',
-        returnDateTime: '',
-        status: 'pendiente',
-        email: '',
-      });
+      reset();
       setClientSearch('');
-      setErrors({});
       fetchNextId();
     } catch (err) {
       setSubmitError(`❌ ${err.message}`);
@@ -252,20 +172,8 @@ export default function TravelRequestForm() {
   };
 
   const handleReset = () => {
-    setFormData({
-      clientDni: '',
-      clientName: '',
-      origin: '',
-      destination: '',
-      tripType: '',
-      passengerName: '',
-      departureDateTime: '',
-      returnDateTime: '',
-      status: 'pendiente',
-      email: '',
-    });
+    reset();
     setClientSearch('');
-    setErrors({});
     setSubmitError('');
     setSubmitSuccess('');
   };
@@ -280,7 +188,7 @@ export default function TravelRequestForm() {
       {submitSuccess && <div className="alert alert-success">{submitSuccess}</div>}
       {submitError && <div className="alert alert-error">{submitError}</div>}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-grid">
           {/* ID Automático */}
           <div className="form-group">
@@ -305,13 +213,17 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="text"
-              name="clientDni"
-              value={formData.clientDni}
-              onChange={handleChange}
               placeholder={t('form.clientDniPlaceholder')}
               className={errors.clientDni ? 'error' : ''}
+              {...register('clientDni', {
+                required: t('validation.dniRequired'),
+                pattern: {
+                  value: /^\d{7,8}-[\dkK]$/,
+                  message: t('validation.dniInvalid'),
+                },
+              })}
             />
-            {errors.clientDni && <span className="error-text">{errors.clientDni}</span>}
+            {errors.clientDni && <span className="error-text">{errors.clientDni.message}</span>}
           </div>
 
           {/* Nombre Cliente */}
@@ -321,13 +233,17 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="text"
-              name="clientName"
-              value={formData.clientName}
-              onChange={handleChange}
               placeholder={t('form.clientNamePlaceholder')}
               className={errors.clientName ? 'error' : ''}
+              {...register('clientName', {
+                required: t('validation.clientNameRequired'),
+                minLength: {
+                  value: 3,
+                  message: t('validation.clientNameMin'),
+                },
+              })}
             />
-            {errors.clientName && <span className="error-text">{errors.clientName}</span>}
+            {errors.clientName && <span className="error-text">{errors.clientName.message}</span>}
           </div>
 
           {/* Email */}
@@ -337,13 +253,17 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
               placeholder={t('form.emailPlaceholder')}
               className={errors.email ? 'error' : ''}
+              {...register('email', {
+                required: t('validation.emailRequired'),
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: t('validation.emailInvalid'),
+                },
+              })}
             />
-            {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.email && <span className="error-text">{errors.email.message}</span>}
           </div>
 
           {/* Tipo de Viaje */}
@@ -352,17 +272,17 @@ export default function TravelRequestForm() {
               {t('form.tripType')} <span className="required">*</span>
             </label>
             <select
-              name="tripType"
-              value={formData.tripType}
-              onChange={handleChange}
               className={errors.tripType ? 'error' : ''}
+              {...register('tripType', {
+                required: t('validation.tripTypeRequired'),
+              })}
             >
               <option value="">{t('form.tripTypeSelect')}</option>
               <option value="negocios">{t('form.tripBusiness')}</option>
               <option value="turismo">{t('form.tripTourism')}</option>
               <option value="otros">{t('form.tripOther')}</option>
             </select>
-            {errors.tripType && <span className="error-text">{errors.tripType}</span>}
+            {errors.tripType && <span className="error-text">{errors.tripType.message}</span>}
           </div>
 
           {/* Origen */}
@@ -372,13 +292,13 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="text"
-              name="origin"
-              value={formData.origin}
-              onChange={handleChange}
               placeholder={t('form.originPlaceholder')}
               className={errors.origin ? 'error' : ''}
+              {...register('origin', {
+                required: t('validation.originRequired'),
+              })}
             />
-            {errors.origin && <span className="error-text">{errors.origin}</span>}
+            {errors.origin && <span className="error-text">{errors.origin.message}</span>}
           </div>
 
           {/* Destino */}
@@ -388,13 +308,13 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="text"
-              name="destination"
-              value={formData.destination}
-              onChange={handleChange}
               placeholder={t('form.destinationPlaceholder')}
               className={errors.destination ? 'error' : ''}
+              {...register('destination', {
+                required: t('validation.destinationRequired'),
+              })}
             />
-            {errors.destination && <span className="error-text">{errors.destination}</span>}
+            {errors.destination && <span className="error-text">{errors.destination.message}</span>}
           </div>
 
           {/* Nombre Pasajero (Búsqueda) */}
@@ -402,6 +322,9 @@ export default function TravelRequestForm() {
             <label>
               {t('form.passengerName')} <span className="required">*</span>
             </label>
+            <input type="hidden" {...register('passengerName', {
+              required: t('validation.passengerNameRequired'),
+            })} />
             <div className="search-container">
               <input
                 type="text"
@@ -425,7 +348,7 @@ export default function TravelRequestForm() {
                 </div>
               )}
             </div>
-            {errors.passengerName && <span className="error-text">{errors.passengerName}</span>}
+            {errors.passengerName && <span className="error-text">{errors.passengerName.message}</span>}
           </div>
 
           {/* Fecha Salida */}
@@ -435,12 +358,18 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="datetime-local"
-              name="departureDateTime"
-              value={formData.departureDateTime}
-              onChange={handleChange}
               className={errors.departureDateTime ? 'error' : ''}
+              {...register('departureDateTime', {
+                required: t('validation.departureDateRequired'),
+                validate: (value) => {
+                  if (new Date(value) < new Date()) {
+                    return t('validation.departureDatePast');
+                  }
+                  return true;
+                },
+              })}
             />
-            {errors.departureDateTime && <span className="error-text">{errors.departureDateTime}</span>}
+            {errors.departureDateTime && <span className="error-text">{errors.departureDateTime.message}</span>}
           </div>
 
           {/* Fecha Regreso */}
@@ -450,12 +379,27 @@ export default function TravelRequestForm() {
             </label>
             <input
               type="datetime-local"
-              name="returnDateTime"
-              value={formData.returnDateTime}
-              onChange={handleChange}
               className={errors.returnDateTime ? 'error' : ''}
+              {...register('returnDateTime', {
+                required: t('validation.returnDateRequired'),
+                validate: {
+                  notPast: (value) => {
+                    if (new Date(value) < new Date()) {
+                      return t('validation.returnDatePast');
+                    }
+                    return true;
+                  },
+                  afterDeparture: (value) => {
+                    const departure = getValues('departureDateTime');
+                    if (departure && new Date(value) <= new Date(departure)) {
+                      return t('validation.returnDateBeforeDeparture');
+                    }
+                    return true;
+                  },
+                },
+              })}
             />
-            {errors.returnDateTime && <span className="error-text">{errors.returnDateTime}</span>}
+            {errors.returnDateTime && <span className="error-text">{errors.returnDateTime.message}</span>}
           </div>
 
           {/* Estado (Radio Buttons) */}
@@ -468,10 +412,10 @@ export default function TravelRequestForm() {
                 <input
                   type="radio"
                   id="status-pendiente"
-                  name="status"
                   value="pendiente"
-                  checked={formData.status === 'pendiente'}
-                  onChange={handleChange}
+                  {...register('status', {
+                    required: t('validation.statusRequired'),
+                  })}
                 />
                 <label htmlFor="status-pendiente">🟡 {t('form.statusPending')}</label>
               </div>
@@ -479,10 +423,10 @@ export default function TravelRequestForm() {
                 <input
                   type="radio"
                   id="status-en-proceso"
-                  name="status"
                   value="en proceso"
-                  checked={formData.status === 'en proceso'}
-                  onChange={handleChange}
+                  {...register('status', {
+                    required: t('validation.statusRequired'),
+                  })}
                 />
                 <label htmlFor="status-en-proceso">🔵 {t('form.statusInProgress')}</label>
               </div>
@@ -490,15 +434,15 @@ export default function TravelRequestForm() {
                 <input
                   type="radio"
                   id="status-finalizada"
-                  name="status"
                   value="finalizada"
-                  checked={formData.status === 'finalizada'}
-                  onChange={handleChange}
+                  {...register('status', {
+                    required: t('validation.statusRequired'),
+                  })}
                 />
                 <label htmlFor="status-finalizada">🟢 {t('form.statusCompleted')}</label>
               </div>
             </div>
-            {errors.status && <span className="error-text">{errors.status}</span>}
+            {errors.status && <span className="error-text">{errors.status.message}</span>}
           </div>
         </div>
 

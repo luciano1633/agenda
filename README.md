@@ -2,6 +2,39 @@
 
 Portal web para la gestión de solicitudes de viaje de la Agencia de Viajes Oeste, desarrollado con **Next.js** (frontend SSR) y **Node.js/Express** (backend API REST).
 
+## 📋 Manejo de Formularios con React Hook Form
+
+La aplicación utiliza **React Hook Form** para gestionar todos los formularios, reemplazando el manejo manual con `useState`:
+
+- **`useForm()`**: Inicializa el formulario con `defaultValues` y modo de validación `onSubmit`.
+- **`register()`**: Vincula cada campo del formulario con reglas de validación declarativas.
+- **`handleSubmit()`**: Gestiona el envío del formulario, ejecutando la lógica solo si las validaciones pasan.
+- **`formState.errors`**: Objeto de errores reactivo que muestra mensajes de validación internacionalizados.
+- **`reset()`**: Resetea el formulario a sus valores por defecto tras un envío exitoso.
+- **`setValue()` / `watch()` / `getValues()`**: Métodos auxiliares para campos con lógica especial (búsqueda de pasajeros, validaciones cruzadas de fechas).
+
+### Formularios migrados a React Hook Form
+
+| Componente | Campos | Validaciones |
+|------------|--------|--------------|
+| `TravelRequestForm` | 10 campos (DNI, nombre, email, origen, destino, tipo viaje, pasajero, salida, regreso, estado) | required, pattern (DNI/email), minLength, validate (fechas pasadas, fecha regreso > salida) |
+| `ClientRequestView` | 2 campos (tipo búsqueda, valor búsqueda) | required, validate dinámico (DNI o email según tipo seleccionado) |
+
+### Ejemplo de validación con React Hook Form + i18n
+
+```jsx
+<input
+  {...register('clientDni', {
+    required: t('validation.dniRequired'),
+    pattern: {
+      value: /^\d{7,8}-[\dkK]$/,
+      message: t('validation.dniInvalid'),
+    },
+  })}
+/>
+{errors.clientDni && <span className="error-text">{errors.clientDni.message}</span>}
+```
+
 ## 🌐 Internacionalización (i18n) con react-i18next
 
 La aplicación implementa **internacionalización completa** usando `react-i18next`, permitiendo cambiar manualmente el idioma entre **español (es)** e **inglés (en)**:
@@ -104,6 +137,7 @@ Se implementa protección contra ataques Cross-Site Scripting (XSS) en ambas cap
 - Tipos de viaje y estados válidos
 - Nombre del cliente con mínimo 3 caracteres
 - **Mensajes de validación internacionalizados** (español e inglés) usando `react-i18next`
+- **React Hook Form** para validaciones declarativas con `register()` y `validate`
 - Validación del formato de búsqueda en el portal del cliente (DNI y email)
 
 ### Persistencia de Datos
@@ -222,7 +256,7 @@ npm run dev
 │   │   │           └── page.js            # Formulario con carga diferida + Skeleton
 │   │   ├── components/
 │   │   │   ├── ClientPageHeader.js         # Encabezado i18n para portal del cliente
-│   │   │   ├── ClientRequestView.js       # Vista de consulta para clientes (i18n)
+│   │   │   ├── ClientRequestView.js       # Vista de consulta para clientes (RHF + i18n)
 │   │   │   ├── DashboardContent.js        # Contenido del dashboard (lazy loaded + i18n)
 │   │   │   ├── HomeContent.js             # Encabezado i18n para página principal
 │   │   │   ├── I18nProvider.js            # Proveedor de contexto i18next
@@ -230,7 +264,7 @@ npm run dev
 │   │   │   ├── ListPageHeader.js          # Encabezado i18n para listado
 │   │   │   ├── Navbar.js                  # Barra de navegación (i18n + selector idioma)
 │   │   │   ├── NewRequestPageHeader.js    # Encabezado i18n para nueva solicitud
-│   │   │   ├── TravelRequestForm.js       # Formulario de solicitud (i18n + validaciones)
+│   │   │   ├── TravelRequestForm.js       # Formulario de solicitud (RHF + i18n + validaciones)
 │   │   │   ├── TravelRequestList.js       # Tabla de solicitudes (i18n + filtros)
 │   │   │   └── skeletons/                 # Componentes Skeleton (retroalimentación visual)
 │   │   │       ├── SkeletonClientView.js  # Skeleton para vista cliente
@@ -260,6 +294,7 @@ npm run dev
 - **react-i18next** + **i18next** (internacionalización ES/EN con cambio manual)
 - **i18next-browser-languagedetector** (detección automática del idioma del navegador)
 - **isomorphic-dompurify** (sanitización XSS compatible con SSR)
+- **react-hook-form** (manejo declarativo de formularios y validaciones)
 - **CSS3** (diseño responsivo, grid, flexbox, animaciones Skeleton)
 
 ### Backend
@@ -280,17 +315,20 @@ npm run dev
 - Accesos rápidos a nueva solicitud, listado y portal cliente
 - Diseño con tarjetas informativas
 
-### Formulario de Solicitud de Viaje — Lazy Loading + Skeleton
+### Formulario de Solicitud de Viaje — React Hook Form + Lazy Loading + Skeleton
+- **React Hook Form** (`useForm`, `register`, `handleSubmit`) para manejo del estado y validaciones
+- Validaciones declarativas con `register()`: `required`, `pattern`, `minLength`, `validate`
+- Mensajes de validación internacionalizados con `t()` de react-i18next
+- Validaciones cruzadas: fecha de regreso debe ser posterior a la de salida (`getValues`)
 - ID automático correlativo (obtenido del backend)
 - Fecha y hora de registro en tiempo real (se actualiza cada segundo)
-- Validación completa de todos los campos antes del envío
 - **Validación de fechas pasadas** (salida y regreso no pueden ser en el pasado)
 - **Sanitización XSS** con DOMPurify antes de enviar datos al backend
-- Campo de búsqueda de pasajeros con dropdown de resultados
+- Campo de búsqueda de pasajeros con dropdown (`setValue` para sincronizar con RHF)
 - Tipo de viaje con control de listado (select)
 - Estado con botones de opción (radio buttons)
 - Componente cargado con `next/dynamic` + `SkeletonForm`
-- Botones de limpiar y registrar
+- Botones de limpiar (`reset()`) y registrar
 
 ### Listado de Solicitudes — SSR + Lazy Loading + Skeleton 3s
 - **Datos pre-renderizados desde el servidor** (tabla lista en el HTML inicial)
@@ -304,10 +342,11 @@ npm run dev
 - Botón de eliminar por solicitud (seleccionable)
 - Diseño responsive con scroll horizontal en pantallas pequeñas
 
-### Portal del Cliente — Lazy Loading + Skeleton
+### Portal del Cliente — React Hook Form + Lazy Loading + Skeleton
+- **React Hook Form** para el formulario de búsqueda con validación dinámica
+- Validación adaptativa: aplica regex de DNI o email según el tipo de búsqueda seleccionado
 - Página `/cliente` con búsqueda por DNI o email
 - Los clientes solo pueden visualizar sus propias solicitudes (solo lectura)
-- Validación del formato de DNI y email antes de buscar
 - Espera simulada de 3 segundos con Skeleton durante la búsqueda
 - Tarjetas con detalle completo de cada solicitud encontrada
 

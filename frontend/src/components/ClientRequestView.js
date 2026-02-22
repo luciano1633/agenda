@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import DOMPurify from 'isomorphic-dompurify';
 import { useTranslation } from 'react-i18next';
 
@@ -16,62 +17,57 @@ const sanitize = (value) => {
 
 /**
  * Componente de vista de cliente internacionalizado.
+ * Utiliza React Hook Form para manejo del formulario de búsqueda con validaciones i18n.
  * Los clientes solo pueden visualizar las solicitudes asociadas a su DNI o email.
  */
 export default function ClientRequestView() {
   const { t, i18n } = useTranslation();
 
-  const [searchValue, setSearchValue] = useState('');
-  const [searchType, setSearchType] = useState('dni');
+  // React Hook Form para el formulario de búsqueda
+  const {
+    register,
+    handleSubmit,
+    formState: { errors: formErrors },
+    setValue,
+    watch,
+    reset,
+  } = useForm({
+    defaultValues: {
+      searchType: 'dni',
+      searchValue: '',
+    },
+    mode: 'onSubmit',
+  });
+
+  const searchType = watch('searchType');
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
 
-  const validateSearch = () => {
-    if (!searchValue.trim()) {
-      setError(t('validation.searchValueRequired'));
-      return false;
-    }
-
-    if (searchType === 'dni') {
-      const rutRegex = /^\d{7,8}-[\dkK]$/;
-      if (!rutRegex.test(searchValue.trim())) {
-        setError(t('validation.dniFormatInvalid'));
-        return false;
-      }
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(searchValue.trim())) {
-        setError(t('validation.emailFormatInvalid'));
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  /**
+   * Envío del formulario de búsqueda gestionado por React Hook Form.
+   * Solo se ejecuta si las validaciones pasan.
+   */
+  const onSubmit = async (data) => {
     setError('');
     setSearched(false);
-
-    if (!validateSearch()) return;
-
     setLoading(true);
+
     try {
       const res = await fetch(`${API_BASE_URL}/travel-requests`);
-      const data = await res.json();
+      const responseData = await res.json();
 
-      if (!data.success) throw new Error(data.message);
+      if (!responseData.success) throw new Error(responseData.message);
 
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      const filtered = data.data.filter((req) => {
-        if (searchType === 'dni') {
-          return req.clientDni === searchValue.trim();
+      const filtered = responseData.data.filter((req) => {
+        if (data.searchType === 'dni') {
+          return req.clientDni === data.searchValue.trim();
         } else {
-          return req.email?.toLowerCase() === searchValue.trim().toLowerCase();
+          return req.email?.toLowerCase() === data.searchValue.trim().toLowerCase();
         }
       });
 
@@ -132,15 +128,15 @@ export default function ClientRequestView() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <form onSubmit={handleSearch} style={{ marginBottom: '1.5rem' }}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ marginBottom: '1.5rem' }}>
         <div className="form-grid">
           <div className="form-group">
             <label>{t('client.searchBy')}</label>
             <select
-              value={searchType}
+              {...register('searchType')}
               onChange={(e) => {
-                setSearchType(e.target.value);
-                setSearchValue('');
+                setValue('searchType', e.target.value);
+                setValue('searchValue', '');
                 setError('');
               }}
             >
@@ -155,13 +151,27 @@ export default function ClientRequestView() {
             </label>
             <input
               type="text"
-              value={searchValue}
-              onChange={(e) => {
-                setSearchValue(e.target.value);
-                if (error) setError('');
-              }}
               placeholder={searchType === 'dni' ? t('client.dniPlaceholder') : t('client.emailPlaceholder')}
+              className={formErrors.searchValue ? 'error' : ''}
+              {...register('searchValue', {
+                required: t('validation.searchValueRequired'),
+                validate: (value) => {
+                  if (searchType === 'dni') {
+                    const rutRegex = /^\d{7,8}-[\dkK]$/;
+                    if (!rutRegex.test(value.trim())) {
+                      return t('validation.dniFormatInvalid');
+                    }
+                  } else {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value.trim())) {
+                      return t('validation.emailFormatInvalid');
+                    }
+                  }
+                  return true;
+                },
+              })}
             />
+            {formErrors.searchValue && <span className="error-text">{formErrors.searchValue.message}</span>}
           </div>
         </div>
 
